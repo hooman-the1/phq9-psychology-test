@@ -50,7 +50,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         {{ historyNotice }}
       </p>
       <section *ngIf="!submitted" class="questionnaire" aria-labelledby="questionnaire-title">
-        <h1 id="questionnaire-title">تست تشخیص افسردگی <span>PHQ-9</span></h1>
+        <h1 #questionnaireTitle id="questionnaire-title" tabindex="-1">تست تشخیص افسردگی <span>PHQ-9</span></h1>
         <div class="rule"></div>
 
         <p class="intro-text">
@@ -175,6 +175,9 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           </svg>
         </div>
         <p class="gauge-caption">{{ score?.total }} امتیاز</p>
+        <div class="button-group">
+          <button type="button" (click)="restartAssessment()">انجام مجدد تست</button>
+        </div>
       </section>
     </main>
   `,
@@ -377,6 +380,9 @@ export class Phq9ShellComponent {
   @ViewChild('validationSummary')
   private validationSummary?: ElementRef<HTMLElement>;
 
+  @ViewChild('questionnaireTitle')
+  private questionnaireTitle?: ElementRef<HTMLElement>;
+
   selectAnswer(answer: number): void {
     this.answers[this.currentQuestionIndex] = answer;
 
@@ -421,6 +427,17 @@ export class Phq9ShellComponent {
 
   isQuestionInvalid(questionIndex: number): boolean {
     return this.validationErrors.has(questionIndex);
+  }
+
+  restartAssessment(): void {
+    this.answers.fill(null);
+    this.currentQuestionIndex = 0;
+    this.validationErrors = new Set<number>();
+    this.validationResult = null;
+    this.score = null;
+    this.saveFailed = false;
+    this.submitted = false;
+    setTimeout(() => this.questionnaireTitle?.nativeElement.focus());
   }
 
   nextQuestion(): void {
