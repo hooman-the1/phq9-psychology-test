@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
 
-import { AppShellComponent } from './app-shell.component';
+import { Phq9ShellComponent } from './phq9';
 
-export const appRoutes: Routes = [{ path: '', component: AppShellComponent }];
+export const appRoutes: Routes = [{ path: '', component: Phq9ShellComponent }];

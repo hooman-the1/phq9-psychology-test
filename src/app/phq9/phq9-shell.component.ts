@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-shell',
+  selector: 'app-phq9-shell',
   standalone: true,
   template: '<main><h1>PHQ-9</h1></main>',
   styles: [
@@ -20,4 +20,4 @@ import { Component } from '@angular/core';
     `,
   ],
 })
-export class AppShellComponent {}
+export class Phq9ShellComponent {}
