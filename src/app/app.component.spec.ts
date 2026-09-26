@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 
 describe('AppComponent', () => {
-  it('renders the placeholder application shell', async () => {
+  it('hosts the application routes', async () => {
     await TestBed.configureTestingModule({
       imports: [AppComponent],
     }).compileComponents();
@@ -11,6 +11,6 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toBe('PHQ-9');
+    expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
   });
 });

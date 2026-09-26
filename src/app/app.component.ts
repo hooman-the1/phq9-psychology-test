@@ -1,23 +1,10 @@
 import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  template: '<main><h1>PHQ-9</h1></main>',
-  styles: [
-    `
-      :host {
-        display: block;
-        min-height: 100vh;
-      }
-
-      main {
-        box-sizing: border-box;
-        margin: 0 auto;
-        max-width: 40rem;
-        padding: 2rem;
-      }
-    `,
-  ],
+  imports: [RouterOutlet],
+  template: '<router-outlet />',
 })
 export class AppComponent {}
