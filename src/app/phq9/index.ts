@@ -6,6 +6,14 @@ export {
 export { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 export { calculatePhq9Score, Phq9Score, Phq9SeverityCategory } from './phq9-scoring';
 export {
+  PHQ9_ASSESSMENT_SCHEMA_VERSION,
+  PHQ9_ASSESSMENT_STORAGE_KEY,
+  Phq9AssessmentEnvelope,
+  Phq9AssessmentRecord,
+  Phq9AssessmentResultSnapshot,
+  isPhq9AssessmentRecord,
+} from './phq9-assessment-record';
+export {
   Phq9ValidationResult,
   validatePhq9Answers,
 } from './phq9-validation';
