@@ -6,6 +6,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "check:boundary": "node scripts/check-boundary.js",
+    "test:boundary": "node --test scripts/check-boundary.test.js",
     "test": "ng test",
     "test:headless": "ng test --no-watch --no-progress --browsers=ChromeHeadlessNoGpu"
   },
