@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 
+import { Phq9AssessmentStorage } from './phq9-assessment-storage';
 import {
   PHQ9_ANSWER_CHOICES,
   PHQ9_QUESTIONS,
@@ -138,6 +139,9 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total }}</p>
         <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
         <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
+        <p *ngIf="saveFailed" class="validation-error" role="alert">
+          نتیجه ذخیره نشد. می‌توانید آن را در این صفحه ببینید، اما پس از بستن صفحه باقی نمی‌ماند.
+        </p>
         <div
           class="result-gauge"
           role="meter"
@@ -338,6 +342,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
   ],
 })
 export class Phq9ShellComponent {
+  private readonly assessmentStorage = inject(Phq9AssessmentStorage);
   readonly questions = PHQ9_QUESTIONS;
   readonly answerChoices = PHQ9_ANSWER_CHOICES;
   readonly answers: Array<number | null> = Array(this.questions.length).fill(null);
@@ -345,6 +350,7 @@ export class Phq9ShellComponent {
   validationResult: Phq9ValidationResult | null = null;
   score: Phq9Score | null = null;
   submitted = false;
+  saveFailed = false;
   currentQuestionIndex = 0;
 
   get resultDetails(): { severity: string; recommendation: string; color: string } | null {
@@ -380,6 +386,21 @@ export class Phq9ShellComponent {
     };
     this.validationErrors = new Set(this.validationResult.missingQuestionIndices);
     this.submitted = this.validationResult.isValid;
+    this.saveFailed = false;
+
+    if (this.submitted && this.score) {
+      const details = RESULT_COPY[this.score.category];
+      this.saveFailed = !this.assessmentStorage.save({
+        answers: this.answers as number[],
+        totalScore: this.score.total,
+        severityCategory: this.score.category,
+        result: {
+          severityLabel: details.severity,
+          recommendation: details.recommendation,
+          warnings: [],
+        },
+      }).ok;
+    }
 
     if (this.validationResult.missingQuestionIndices.length > 0) {
       this.currentQuestionIndex = this.validationResult.missingQuestionIndices[0];

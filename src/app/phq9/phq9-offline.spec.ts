@@ -1,11 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { PHQ9_ASSESSMENT_STORAGE_KEY } from './phq9-assessment-record';
+import { Phq9AssessmentStorage } from './phq9-assessment-storage';
 import { Phq9ShellComponent } from './phq9-shell.component';
 
 describe('PHQ-9 offline assessment flow', () => {
   beforeEach(async () => {
+    localStorage.removeItem(PHQ9_ASSESSMENT_STORAGE_KEY);
     await TestBed.configureTestingModule({ imports: [Phq9ShellComponent] }).compileComponents();
   });
+  afterEach(() => localStorage.removeItem(PHQ9_ASSESSMENT_STORAGE_KEY));
 
   it('loads, navigates, and submits locally when assessment requests cannot start', () => {
     const fetchRequest = spyOn(window, 'fetch').and.throwError('Network unavailable');
@@ -43,7 +47,11 @@ describe('PHQ-9 offline assessment flow', () => {
     expect(result.querySelector('.result-gauge')?.getAttribute('aria-valuenow')).toBe('12');
     expect(fetchRequest).not.toHaveBeenCalled();
     expect(xhrOpen).not.toHaveBeenCalled();
-    expect(storageWrite).not.toHaveBeenCalled();
+    expect(storageWrite).toHaveBeenCalledTimes(1);
+    expect(storageWrite.calls.mostRecent().args[0]).toBe(PHQ9_ASSESSMENT_STORAGE_KEY);
+    const saved = new Phq9AssessmentStorage().read();
+    expect(saved.ok).toBeTrue();
+    if (saved.ok) expect(saved.records[0].answers).toEqual(component.answers as number[]);
   });
 
   it('keeps invalid submissions local and clears an earlier result', () => {
@@ -87,7 +95,10 @@ describe('PHQ-9 offline assessment flow', () => {
     expect(second.nativeElement.querySelector('.result-card')).toBeNull();
     expect(fetchRequest).not.toHaveBeenCalled();
     expect(xhrOpen).not.toHaveBeenCalled();
-    expect(storageWrite).not.toHaveBeenCalled();
+    expect(storageWrite).toHaveBeenCalledTimes(1);
+    const saved = new Phq9AssessmentStorage().read();
+    expect(saved.ok).toBeTrue();
+    if (saved.ok) expect(saved.records.length).toBe(1);
   });
 });
 
