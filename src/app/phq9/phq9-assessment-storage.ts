@@ -17,6 +17,10 @@ export type Phq9StorageSaveResult =
   | { readonly ok: true; readonly record: Phq9AssessmentRecord }
   | { readonly ok: false; readonly error: 'unavailable' | 'invalid-data' | 'write-failed' };
 
+export type Phq9StorageDeleteResult =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly error: 'unavailable' | 'invalid-data' | 'write-failed' | 'missing' };
+
 let nextLocalId = 0;
 
 /** Browser storage boundary for completed assessments. */
@@ -92,6 +96,27 @@ export class Phq9AssessmentStorage {
     try {
       window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
       return { ok: true, record };
+    } catch {
+      return { ok: false, error: 'write-failed' };
+    }
+  }
+
+  delete(id: string): Phq9StorageDeleteResult {
+    const existing = this.read();
+    if (!existing.ok || ('partial' in existing && existing.partial)) {
+      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
+    }
+    if (!existing.records.some((record) => record.id === id)) {
+      return { ok: false, error: 'missing' };
+    }
+
+    const envelope: Phq9AssessmentEnvelope = {
+      schemaVersion: PHQ9_ASSESSMENT_SCHEMA_VERSION,
+      records: existing.records.filter((record) => record.id !== id),
+    };
+    try {
+      window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
+      return { ok: true };
     } catch {
       return { ok: false, error: 'write-failed' };
     }

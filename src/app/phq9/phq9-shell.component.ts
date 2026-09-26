@@ -59,6 +59,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <p *ngIf="historyHasSkippedEntries" class="validation-summary" role="alert">
           برخی از موارد تاریخچه ذخیره‌شده نامعتبر بودند و بارگذاری نشدند.
         </p>
+        <p *ngIf="deleteError" class="validation-summary" role="alert">{{ deleteError }}</p>
         <ng-container *ngIf="historyRead?.ok">
           <p *ngIf="historyRecords.length === 0" class="history-empty">هنوز آزمونی در تاریخچه ذخیره نشده است.</p>
           <ol *ngIf="historyRecords.length > 0" class="history-list">
@@ -68,9 +69,21 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               <p>امتیاز: {{ record.totalScore }} از ۲۷</p>
               <p>شدت افسردگی: {{ record.result.severityLabel }}</p>
               <button type="button" [attr.aria-label]="'نمایش جزئیات آزمون ' + (index + 1)" (click)="openDetail(record.id)">نمایش جزئیات</button>
+              <button *ngIf="!historyHasSkippedEntries" class="history-delete" type="button"
+                [attr.aria-label]="'حذف آزمون ' + (index + 1)" (click)="requestDelete(record)">حذف آزمون</button>
             </li>
           </ol>
         </ng-container>
+        <section *ngIf="pendingDeleteRecord as record" class="delete-dialog" role="alertdialog" aria-modal="true"
+          aria-labelledby="delete-title" aria-describedby="delete-description" (keydown.escape)="cancelDelete()"
+          (keydown.tab)="keepDeleteFocus($event)">
+          <h2 id="delete-title">حذف آزمون ذخیره‌شده</h2>
+          <p id="delete-description">آزمون ثبت‌شده در {{ formatHistoryDate(record.createdAt) }} با امتیاز {{ record.totalScore }} از ۲۷ برای همیشه حذف می‌شود. این حذف دائمی است.</p>
+          <div class="button-group">
+            <button #deleteCancel class="delete-cancel" type="button" (click)="cancelDelete()">انصراف</button>
+            <button class="delete-confirm" type="button" (click)="confirmDelete()">حذف دائمی</button>
+          </div>
+        </section>
         <div class="button-group">
           <button type="button" (click)="closeHistory()">{{ submitted ? 'بازگشت به نتیجه' : 'بازگشت به آزمون' }}</button>
         </div>
@@ -383,6 +396,26 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         font-size: 1.125rem;
       }
 
+      .history-delete {
+        margin-inline-start: 0.75rem;
+        border-color: #b3261e;
+        color: #b3261e;
+      }
+
+      .delete-dialog {
+        position: fixed;
+        z-index: 10;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
+        box-sizing: border-box;
+        width: min(32rem, calc(100vw - 2rem));
+        padding: 1.5rem;
+        border: 2px solid #546e7a;
+        border-radius: 0.25rem;
+        background: #fff;
+        box-shadow: 0 0 0 100vmax rgb(0 0 0 / 40%);
+      }
+
       .detail-answers {
         display: grid;
         gap: 0.75rem;
@@ -461,6 +494,8 @@ export class Phq9ShellComponent {
   detailRecord: Phq9AssessmentRecord | null = null;
   detailMissing = false;
   detailReadFailed = false;
+  pendingDeleteRecord: Phq9AssessmentRecord | null = null;
+  deleteError: string | null = null;
 
   private readonly historyDateFormatter = new Intl.DateTimeFormat('fa-IR', {
     dateStyle: 'medium',
@@ -501,12 +536,68 @@ export class Phq9ShellComponent {
   @ViewChild('resultHistoryAction')
   private resultHistoryAction?: ElementRef<HTMLElement>;
 
+  @ViewChild('deleteCancel')
+  private deleteCancel?: ElementRef<HTMLButtonElement>;
+
   openHistory(): void {
+    this.deleteError = null;
     this.selectedDetailId = null;
     this.detailRecord = null;
     this.refreshHistory();
     this.showHistory = true;
     setTimeout(() => this.historyTitle?.nativeElement.focus());
+  }
+
+  requestDelete(record: Phq9AssessmentRecord): void {
+    this.deleteError = null;
+    this.pendingDeleteRecord = record;
+    setTimeout(() => this.deleteCancel?.nativeElement.focus());
+  }
+
+  cancelDelete(): void {
+    const id = this.pendingDeleteRecord?.id;
+    this.pendingDeleteRecord = null;
+    setTimeout(() => this.focusDeleteAction(id));
+  }
+
+  keepDeleteFocus(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    const buttons = Array.from(this.host.nativeElement.querySelectorAll<HTMLButtonElement>('.delete-dialog button'));
+    if (buttons.length === 0) return;
+    const target = event.target as HTMLElement;
+    if (keyboardEvent.shiftKey && target === buttons[0]) {
+      event.preventDefault();
+      buttons[buttons.length - 1].focus();
+    } else if (!keyboardEvent.shiftKey && target === buttons[buttons.length - 1]) {
+      event.preventDefault();
+      buttons[0].focus();
+    }
+  }
+
+  confirmDelete(): void {
+    const id = this.pendingDeleteRecord?.id;
+    if (!id) return;
+    const previousIndex = this.historyRecords.findIndex((record) => record.id === id);
+    const result = this.assessmentStorage.delete(id);
+    this.pendingDeleteRecord = null;
+    this.refreshHistory();
+    if (!result.ok) {
+      this.deleteError = result.error === 'missing'
+        ? 'این آزمون دیگر در تاریخچه وجود ندارد و حذف نشد.'
+        : 'آزمون حذف نشد. دسترسی به تاریخچه یا ذخیره تغییرات ممکن نبود؛ داده‌های ذخیره‌شده تغییر نکرده‌اند.';
+    }
+    setTimeout(() => {
+      const nextId = result.ok
+        ? this.historyRecords[Math.min(previousIndex, this.historyRecords.length - 1)]?.id
+        : id;
+      this.focusDeleteAction(nextId);
+    });
+  }
+
+  private focusDeleteAction(id: string | undefined | null): void {
+    const row = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.history-view [data-record-id]'))
+      .find((candidate) => candidate.getAttribute('data-record-id') === id);
+    (row?.querySelector<HTMLButtonElement>('.history-delete') ?? this.historyTitle?.nativeElement)?.focus();
   }
 
   openDetail(id: string): void {
