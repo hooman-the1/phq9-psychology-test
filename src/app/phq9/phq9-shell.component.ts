@@ -11,26 +11,31 @@ import {
   validatePhq9Answers,
 } from './phq9-validation';
 
-const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendation: string }> = {
+const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendation: string; color: string }> = {
   minimal: {
     severity: 'حداقل افسردگی',
     recommendation: 'نیازی به اقدام خاصی نیست، اما مراقب حال و هوای خود باشید.',
+    color: '#43a047',
   },
   mild: {
     severity: 'افسردگی خفیف',
     recommendation: 'تغییرات خلق خود را زیر نظر بگیرید و در صورت نیاز با یک دوست یا مشاور صحبت کنید.',
+    color: '#fdd835',
   },
   moderate: {
     severity: 'افسردگی متوسط',
     recommendation: 'صحبت با یک روانشناس یا مشاور توصیه می‌شود.',
+    color: '#fb8c00',
   },
   moderately_severe: {
     severity: 'افسردگی نسبتاً شدید',
     recommendation: 'به شدت توصیه می‌شود از یک متخصص سلامت روان کمک بگیرید.',
+    color: '#e53935',
   },
   severe: {
     severity: 'افسردگی شدید',
     recommendation: 'نیاز فوری به مداخله تخصصی روانشناسی یا روانپزشکی وجود دارد.',
+    color: '#b71c1c',
   },
 };
 
@@ -131,8 +136,38 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <h1 id="result-title">نتیجه تست</h1>
         <div class="rule"></div>
         <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total }}</p>
-        <p class="result-severity"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
+        <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
         <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
+        <div
+          class="result-gauge"
+          role="meter"
+          aria-valuemin="0"
+          aria-valuemax="27"
+          [attr.aria-valuenow]="score?.total"
+          [attr.aria-valuetext]="score?.total + ' از 27، ' + details.severity"
+          aria-label="امتیاز افسردگی"
+        >
+          <svg viewBox="0 0 220 130" aria-hidden="true" focusable="false">
+            <path class="gauge-track" d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#e0e0e0" stroke-width="15" stroke-linecap="round" />
+            <path
+              class="gauge-foreground"
+              d="M 20 110 A 90 90 0 0 1 200 110"
+              fill="none"
+              [attr.stroke]="details.color"
+              stroke-width="15"
+              stroke-linecap="round"
+              pathLength="27"
+              [attr.stroke-dasharray]="score?.total + ' 27'"
+            />
+            <polygon
+              class="gauge-marker"
+              points="0,-12 -6,-2 6,-2"
+              [attr.fill]="details.color"
+              [attr.transform]="markerTransform"
+            />
+          </svg>
+        </div>
+        <p class="gauge-caption">{{ score?.total }} امتیاز</p>
       </section>
     </main>
   `,
@@ -266,6 +301,29 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         margin-top: 1.5rem;
       }
 
+      .result-severity {
+        display: inline-block;
+        border-bottom: 3px solid transparent;
+        padding-bottom: 0.2rem;
+      }
+
+      .result-gauge {
+        width: min(220px, 100%);
+        margin: 1.875rem auto 0;
+      }
+
+      .result-gauge svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .gauge-caption {
+        margin: 0.625rem 0 0;
+        text-align: center;
+        font-size: 1.125rem;
+      }
+
       .visually-hidden {
         position: absolute;
         width: 1px;
@@ -289,8 +347,16 @@ export class Phq9ShellComponent {
   submitted = false;
   currentQuestionIndex = 0;
 
-  get resultDetails(): { severity: string; recommendation: string } | null {
+  get resultDetails(): { severity: string; recommendation: string; color: string } | null {
     return this.submitted && this.score ? RESULT_COPY[this.score.category] : null;
+  }
+
+  get markerTransform(): string {
+    const fraction = (this.score?.total ?? 0) / 27;
+    const x = 110 - 90 * Math.cos(Math.PI * fraction);
+    const y = 110 - 90 * Math.sin(Math.PI * fraction);
+    const angle = -90 + 180 * fraction;
+    return `translate(${x} ${y}) rotate(${angle})`;
   }
 
   @ViewChild('validationSummary')
