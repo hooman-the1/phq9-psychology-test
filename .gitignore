@@ -1,2 +1,7 @@
 /_docs
 /copied-from-main-repo
+AGENTS.md
+/node_modules
+/dist
+/.angular
+/coverage
