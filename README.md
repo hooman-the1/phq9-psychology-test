@@ -27,9 +27,12 @@ The headless test script uses a no-GPU Chrome launcher for reliable execution in
 Successful submissions are stored in this browser's `localStorage` under
 `phq9.assessments` as a version 1 JSON envelope. Each record keeps the nine
 answers, score, severity, UTC submission time, and a snapshot of the displayed
-result. The `Phq9AssessmentStorage.read()` method returns saved records for the
-future history view. A partially corrupt v1 envelope returns valid records in
-stored order with a partial-data status; invalid and duplicate records are skipped.
+result. The history action on the questionnaire and result opens a local list
+of saved assessments, newest first, with their submission time, score, and saved
+severity. Returning to the assessment preserves the current page state. The
+`Phq9AssessmentStorage.read()` method supplies the list. A partially corrupt
+v1 envelope returns valid records in stored order with a partial-data status;
+invalid and duplicate records are skipped.
 Invalid envelopes, unsupported versions, and storage read failures return distinct
 failures. Reads never rewrite stored data, and saving refuses to overwrite data
 that could not be fully read. Data stays in the same browser profile and is not sent

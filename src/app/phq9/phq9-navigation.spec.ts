@@ -20,7 +20,7 @@ describe('PHQ-9 question navigation', () => {
   }
 
   function controls(): HTMLButtonElement[] {
-    return Array.from(element().querySelectorAll('.button-group button'));
+    return Array.from(element().querySelectorAll('.question-card .button-group button'));
   }
 
   function choices(): HTMLInputElement[] {

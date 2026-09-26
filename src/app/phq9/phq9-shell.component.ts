@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 
-import { Phq9AssessmentStorage } from './phq9-assessment-storage';
+import { Phq9AssessmentStorage, Phq9StorageReadResult } from './phq9-assessment-storage';
+import { Phq9AssessmentRecord } from './phq9-assessment-record';
 import {
   PHQ9_ANSWER_CHOICES,
   PHQ9_QUESTIONS,
@@ -46,10 +47,34 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
   imports: [CommonModule],
   template: `
     <main dir="rtl">
-      <p *ngIf="historyNotice" class="history-notice validation-summary" role="alert">
+      <p *ngIf="!showHistory && historyNotice" class="history-notice validation-summary" role="alert">
         {{ historyNotice }}
       </p>
-      <section *ngIf="!submitted" class="questionnaire" aria-labelledby="questionnaire-title">
+      <section *ngIf="showHistory" class="questionnaire history-view" aria-labelledby="history-title">
+        <h1 #historyTitle id="history-title" tabindex="-1">تاریخچه آزمون‌ها</h1>
+        <div class="rule"></div>
+        <p *ngIf="historyRead && !historyRead.ok" class="validation-summary" role="alert">
+          تاریخچه ذخیره‌شده بارگذاری نشد. داده‌های ذخیره‌شده تغییر نکرده‌اند.
+        </p>
+        <p *ngIf="historyHasSkippedEntries" class="validation-summary" role="alert">
+          برخی از موارد تاریخچه ذخیره‌شده نامعتبر بودند و بارگذاری نشدند.
+        </p>
+        <ng-container *ngIf="historyRead?.ok">
+          <p *ngIf="historyRecords.length === 0" class="history-empty">هنوز آزمونی در تاریخچه ذخیره نشده است.</p>
+          <ol *ngIf="historyRecords.length > 0" class="history-list">
+            <li *ngFor="let record of historyRecords; let index = index" [attr.data-record-id]="record.id">
+              <h2>آزمون {{ index + 1 }}</h2>
+              <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
+              <p>امتیاز: {{ record.totalScore }} از ۲۷</p>
+              <p>شدت افسردگی: {{ record.result.severityLabel }}</p>
+            </li>
+          </ol>
+        </ng-container>
+        <div class="button-group">
+          <button type="button" (click)="closeHistory()">{{ submitted ? 'بازگشت به نتیجه' : 'بازگشت به آزمون' }}</button>
+        </div>
+      </section>
+      <section *ngIf="!showHistory && !submitted" class="questionnaire" aria-labelledby="questionnaire-title">
         <h1 #questionnaireTitle id="questionnaire-title" tabindex="-1">تست تشخیص افسردگی <span>PHQ-9</span></h1>
         <div class="rule"></div>
 
@@ -135,8 +160,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
             [attr.aria-label]="'سؤال ' + (currentQuestionIndex + 1) + ' از ' + questions.length"
           ></progress>
         </section>
+        <div class="button-group">
+          <button #questionnaireHistoryAction type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
+        </div>
       </section>
-      <section *ngIf="resultDetails as details" class="questionnaire result-card" aria-labelledby="result-title">
+      <section *ngIf="!showHistory && resultDetails as details" class="questionnaire result-card" aria-labelledby="result-title">
         <h1 id="result-title">نتیجه تست</h1>
         <div class="rule"></div>
         <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total }}</p>
@@ -177,6 +205,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <p class="gauge-caption">{{ score?.total }} امتیاز</p>
         <div class="button-group">
           <button type="button" (click)="restartAssessment()">انجام مجدد تست</button>
+          <button #resultHistoryAction type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
         </div>
       </section>
     </main>
@@ -305,6 +334,28 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         opacity: 0.5;
       }
 
+      button:focus-visible {
+        outline: 3px solid #1a73e8;
+        outline-offset: 2px;
+      }
+
+      .history-list {
+        display: grid;
+        gap: 1rem;
+        padding-inline-start: 1.5rem;
+      }
+
+      .history-list li {
+        padding: 0.75rem;
+        border: 1px solid #e0e0e0;
+        border-radius: 0.25rem;
+      }
+
+      .history-list h2 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+
       progress {
         display: block;
         width: 100%;
@@ -364,6 +415,18 @@ export class Phq9ShellComponent {
   submitted = false;
   saveFailed = false;
   currentQuestionIndex = 0;
+  showHistory = false;
+  historyRead: Phq9StorageReadResult | null = null;
+  historyRecords: readonly Phq9AssessmentRecord[] = [];
+
+  private readonly historyDateFormatter = new Intl.DateTimeFormat('fa-IR', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
+  get historyHasSkippedEntries(): boolean {
+    return !!this.historyRead?.ok && 'partial' in this.historyRead && this.historyRead.partial;
+  }
 
   get resultDetails(): { severity: string; recommendation: string; color: string } | null {
     return this.submitted && this.score ? RESULT_COPY[this.score.category] : null;
@@ -382,6 +445,39 @@ export class Phq9ShellComponent {
 
   @ViewChild('questionnaireTitle')
   private questionnaireTitle?: ElementRef<HTMLElement>;
+
+  @ViewChild('historyTitle')
+  private historyTitle?: ElementRef<HTMLElement>;
+
+  @ViewChild('questionnaireHistoryAction')
+  private questionnaireHistoryAction?: ElementRef<HTMLElement>;
+
+  @ViewChild('resultHistoryAction')
+  private resultHistoryAction?: ElementRef<HTMLElement>;
+
+  openHistory(): void {
+    this.historyRead = this.assessmentStorage.read();
+    this.historyRecords = this.historyRead.ok
+      ? this.historyRead.records
+        .map((record, index) => ({ record, index }))
+        .sort((left, right) =>
+          Date.parse(right.record.createdAt) - Date.parse(left.record.createdAt)
+          || left.index - right.index,
+        )
+        .map(({ record }) => record)
+      : [];
+    this.showHistory = true;
+    setTimeout(() => this.historyTitle?.nativeElement.focus());
+  }
+
+  closeHistory(): void {
+    this.showHistory = false;
+    setTimeout(() => (this.submitted ? this.resultHistoryAction : this.questionnaireHistoryAction)?.nativeElement.focus());
+  }
+
+  formatHistoryDate(createdAt: string): string {
+    return this.historyDateFormatter.format(new Date(createdAt));
+  }
 
   selectAnswer(answer: number): void {
     this.answers[this.currentQuestionIndex] = answer;
