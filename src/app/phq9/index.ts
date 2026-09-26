@@ -5,6 +5,10 @@ export {
 } from './phq9-questionnaire';
 export { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 export {
+  Phq9ValidationResult,
+  validatePhq9Answers,
+} from './phq9-validation';
+export {
   PHQ9_FEATURE_IMPORTS,
   Phq9DependencyAssemblyComponent,
 } from './phq9-dependency-assembly';

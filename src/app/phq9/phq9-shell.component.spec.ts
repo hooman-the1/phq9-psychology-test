@@ -73,6 +73,59 @@ describe('Phq9ShellComponent questionnaire rendering', () => {
         .checked,
     ).toBeTrue();
   });
+
+  it('blocks submission with no answers and identifies every question', async () => {
+    const result = fixture.componentInstance.submitAssessment();
+    fixture.detectChanges();
+
+    expect(result.isValid).toBeFalse();
+    expect(result.missingQuestionIndices).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(fixture.componentInstance.submitted).toBeFalse();
+    expect(fixture.nativeElement.querySelectorAll('.validation-error').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.validation-summary li').length).toBe(9);
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(document.activeElement).toBe(
+      fixture.nativeElement.querySelector('.validation-summary'),
+    );
+  });
+
+  it('blocks submission with one missing answer and preserves existing answers', () => {
+    fixture.componentInstance.answers.fill(2);
+    fixture.componentInstance.answers[4] = null;
+
+    const result = fixture.componentInstance.submitAssessment();
+    fixture.detectChanges();
+
+    expect(result.isValid).toBeFalse();
+    expect(result.missingQuestionIndices).toEqual([4]);
+    expect(fixture.componentInstance.answers).toEqual([2, 2, 2, 2, null, 2, 2, 2, 2]);
+    expect(fixture.componentInstance.isQuestionInvalid(4)).toBeTrue();
+    expect(fixture.componentInstance.isQuestionInvalid(3)).toBeFalse();
+  });
+
+  it('accepts answer value 0 and all nine answered values', () => {
+    fixture.componentInstance.answers.fill(0);
+
+    const result = fixture.componentInstance.submitAssessment();
+    fixture.detectChanges();
+
+    expect(result).toEqual({ isValid: true, missingQuestionIndices: [] });
+    expect(fixture.componentInstance.submitted).toBeTrue();
+  });
+
+  it('clears an answer error after selecting an answer without changing others', () => {
+    fixture.componentInstance.answers.fill(1);
+    fixture.componentInstance.answers[2] = null;
+    fixture.componentInstance.submitAssessment();
+    fixture.detectChanges();
+
+    fixture.componentInstance.selectAnswer(0);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.answers).toEqual([1, 1, 0, 1, 1, 1, 1, 1, 1]);
+    expect(fixture.componentInstance.isQuestionInvalid(2)).toBeFalse();
+    expect(fixture.componentInstance.validationErrors.size).toBe(0);
+  });
 });
 
 function optionLabels(element: HTMLElement): string[] {

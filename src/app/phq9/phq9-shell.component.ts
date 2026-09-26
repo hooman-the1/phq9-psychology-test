@@ -1,10 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 
 import {
   PHQ9_ANSWER_CHOICES,
   PHQ9_QUESTIONS,
 } from './phq9-questionnaire';
+import {
+  Phq9ValidationResult,
+  validatePhq9Answers,
+} from './phq9-validation';
 
 @Component({
   selector: 'app-phq9-shell',
@@ -22,12 +26,31 @@ import {
         </p>
         <div class="rule"></div>
 
+        <section
+          #validationSummary
+          class="validation-summary"
+          aria-live="assertive"
+          aria-labelledby="validation-summary-title"
+          [hidden]="validationErrors.size === 0"
+          tabindex="-1"
+        >
+          <h2 id="validation-summary-title">Please answer the highlighted questions.</h2>
+          <ul>
+            <li *ngFor="let questionIndex of validationErrors">
+              Question {{ questionIndex + 1 }} requires an answer.
+            </li>
+          </ul>
+        </section>
+
         <section class="question-card" aria-live="polite">
           <p class="question">
             {{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex] }}
           </p>
 
-          <fieldset>
+          <fieldset
+            [attr.aria-describedby]="isQuestionInvalid(currentQuestionIndex) ? 'question-error' : null"
+            [attr.aria-invalid]="isQuestionInvalid(currentQuestionIndex)"
+          >
             <legend class="visually-hidden">گزینه‌های پاسخ</legend>
             <label *ngFor="let option of answerChoices">
               <input
@@ -40,6 +63,14 @@ import {
               <span>{{ option.label }}</span>
             </label>
           </fieldset>
+          <p
+            *ngIf="isQuestionInvalid(currentQuestionIndex)"
+            id="question-error"
+            class="validation-error"
+            role="alert"
+          >
+            An answer is required for this question.
+          </p>
 
           <div class="button-group">
             <button
@@ -55,6 +86,13 @@ import {
               (click)="nextQuestion()"
             >
               بعدی
+            </button>
+            <button
+              *ngIf="currentQuestionIndex === questions.length - 1"
+              type="button"
+              (click)="submitAssessment()"
+            >
+              Submit
             </button>
           </div>
 
@@ -119,6 +157,33 @@ import {
         margin: 0 0 1rem;
         font-size: 1.125rem;
         font-weight: 500;
+      }
+
+      .validation-summary {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border: 2px solid #b3261e;
+        background: #fff8f7;
+      }
+
+      .validation-summary:focus {
+        outline: 3px solid #1a73e8;
+        outline-offset: 2px;
+      }
+
+      .validation-summary h2,
+      .validation-summary ul {
+        margin: 0;
+      }
+
+      .validation-summary ul {
+        padding-inline-start: 1.5rem;
+      }
+
+      .validation-error {
+        margin: 0.75rem 0 0;
+        color: #b3261e;
+        font-weight: 600;
       }
 
       fieldset {
@@ -187,10 +252,38 @@ export class Phq9ShellComponent {
   readonly questions = PHQ9_QUESTIONS;
   readonly answerChoices = PHQ9_ANSWER_CHOICES;
   readonly answers: Array<number | null> = Array(this.questions.length).fill(null);
+  validationErrors = new Set<number>();
+  validationResult: Phq9ValidationResult | null = null;
+  submitted = false;
   currentQuestionIndex = 0;
+
+  @ViewChild('validationSummary')
+  private validationSummary?: ElementRef<HTMLElement>;
 
   selectAnswer(answer: number): void {
     this.answers[this.currentQuestionIndex] = answer;
+
+    if (this.validationErrors.has(this.currentQuestionIndex)) {
+      this.validationErrors = new Set(this.validationErrors);
+      this.validationErrors.delete(this.currentQuestionIndex);
+    }
+  }
+
+  submitAssessment(): Phq9ValidationResult {
+    this.validationResult = validatePhq9Answers(this.answers);
+    this.validationErrors = new Set(this.validationResult.missingQuestionIndices);
+    this.submitted = this.validationResult.isValid;
+
+    if (!this.validationResult.isValid) {
+      this.currentQuestionIndex = this.validationResult.missingQuestionIndices[0];
+      setTimeout(() => this.validationSummary?.nativeElement.focus());
+    }
+
+    return this.validationResult;
+  }
+
+  isQuestionInvalid(questionIndex: number): boolean {
+    return this.validationErrors.has(questionIndex);
   }
 
   nextQuestion(): void {
