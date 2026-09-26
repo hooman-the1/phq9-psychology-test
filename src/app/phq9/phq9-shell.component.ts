@@ -5,11 +5,34 @@ import {
   PHQ9_ANSWER_CHOICES,
   PHQ9_QUESTIONS,
 } from './phq9-questionnaire';
-import { calculatePhq9Score, Phq9Score } from './phq9-scoring';
+import { calculatePhq9Score, Phq9Score, Phq9SeverityCategory } from './phq9-scoring';
 import {
   Phq9ValidationResult,
   validatePhq9Answers,
 } from './phq9-validation';
+
+const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendation: string }> = {
+  minimal: {
+    severity: 'حداقل افسردگی',
+    recommendation: 'نیازی به اقدام خاصی نیست، اما مراقب حال و هوای خود باشید.',
+  },
+  mild: {
+    severity: 'افسردگی خفیف',
+    recommendation: 'تغییرات خلق خود را زیر نظر بگیرید و در صورت نیاز با یک دوست یا مشاور صحبت کنید.',
+  },
+  moderate: {
+    severity: 'افسردگی متوسط',
+    recommendation: 'صحبت با یک روانشناس یا مشاور توصیه می‌شود.',
+  },
+  moderately_severe: {
+    severity: 'افسردگی نسبتاً شدید',
+    recommendation: 'به شدت توصیه می‌شود از یک متخصص سلامت روان کمک بگیرید.',
+  },
+  severe: {
+    severity: 'افسردگی شدید',
+    recommendation: 'نیاز فوری به مداخله تخصصی روانشناسی یا روانپزشکی وجود دارد.',
+  },
+};
 
 @Component({
   selector: 'app-phq9-shell',
@@ -17,7 +40,7 @@ import {
   imports: [CommonModule],
   template: `
     <main dir="rtl">
-      <section class="questionnaire" aria-labelledby="questionnaire-title">
+      <section *ngIf="!submitted" class="questionnaire" aria-labelledby="questionnaire-title">
         <h1 id="questionnaire-title">تست تشخیص افسردگی <span>PHQ-9</span></h1>
         <div class="rule"></div>
 
@@ -103,6 +126,13 @@ import {
             [attr.aria-label]="'سؤال ' + (currentQuestionIndex + 1) + ' از ' + questions.length"
           ></progress>
         </section>
+      </section>
+      <section *ngIf="resultDetails as details" class="questionnaire result-card" aria-labelledby="result-title">
+        <h1 id="result-title">نتیجه تست</h1>
+        <div class="rule"></div>
+        <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total }}</p>
+        <p class="result-severity"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
+        <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
       </section>
     </main>
   `,
@@ -258,6 +288,10 @@ export class Phq9ShellComponent {
   score: Phq9Score | null = null;
   submitted = false;
   currentQuestionIndex = 0;
+
+  get resultDetails(): { severity: string; recommendation: string } | null {
+    return this.submitted && this.score ? RESULT_COPY[this.score.category] : null;
+  }
 
   @ViewChild('validationSummary')
   private validationSummary?: ElementRef<HTMLElement>;
