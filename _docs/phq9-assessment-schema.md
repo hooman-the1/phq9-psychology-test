@@ -8,6 +8,8 @@ The intended browser storage key is `phq9.assessments`. Its JSON value is one en
 
 Deleting one assessment removes only the record with the selected `id` and writes the same v1 envelope with all other records unchanged. Deletion requires a complete valid read; malformed envelopes, unsupported versions, and envelopes with skipped invalid or duplicate records must not be rewritten.
 
+Clearing all history requires a fresh, complete valid read with at least one record, then writes the v1 empty envelope shown above. Empty, unreadable, malformed, unsupported, and partial history must not be rewritten.
+
 One completed assessment has this shape:
 
 ```json

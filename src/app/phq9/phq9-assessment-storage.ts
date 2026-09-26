@@ -121,6 +121,27 @@ export class Phq9AssessmentStorage {
       return { ok: false, error: 'write-failed' };
     }
   }
+
+  clearAll(): Phq9StorageDeleteResult {
+    const existing = this.read();
+    if (!existing.ok || ('partial' in existing && existing.partial)) {
+      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
+    }
+    if (existing.records.length === 0) {
+      return { ok: false, error: 'missing' };
+    }
+
+    const envelope: Phq9AssessmentEnvelope = {
+      schemaVersion: PHQ9_ASSESSMENT_SCHEMA_VERSION,
+      records: [],
+    };
+    try {
+      window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
+      return { ok: true };
+    } catch {
+      return { ok: false, error: 'write-failed' };
+    }
+  }
 }
 
 function isAssessmentEnvelope(value: unknown): value is { schemaVersion: typeof PHQ9_ASSESSMENT_SCHEMA_VERSION; records: unknown[] } {

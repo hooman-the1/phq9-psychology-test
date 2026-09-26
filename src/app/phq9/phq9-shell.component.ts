@@ -60,6 +60,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           برخی از موارد تاریخچه ذخیره‌شده نامعتبر بودند و بارگذاری نشدند.
         </p>
         <p *ngIf="deleteError" class="validation-summary" role="alert">{{ deleteError }}</p>
+        <p *ngIf="clearError" class="validation-summary" role="alert">{{ clearError }}</p>
         <ng-container *ngIf="historyRead?.ok">
           <p *ngIf="historyRecords.length === 0" class="history-empty">هنوز آزمونی در تاریخچه ذخیره نشده است.</p>
           <ol *ngIf="historyRecords.length > 0" class="history-list">
@@ -73,7 +74,20 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
                 [attr.aria-label]="'حذف آزمون ' + (index + 1)" (click)="requestDelete(record)">حذف آزمون</button>
             </li>
           </ol>
+          <div *ngIf="historyRecords.length > 0 && !historyHasSkippedEntries" class="button-group">
+            <button #clearAction class="history-clear" type="button" (click)="requestClearAll()">پاک کردن همهٔ تاریخچه</button>
+          </div>
         </ng-container>
+        <section *ngIf="pendingClearAll" class="delete-dialog clear-dialog" role="alertdialog" aria-modal="true"
+          aria-labelledby="clear-title" aria-describedby="clear-description" (keydown.escape)="cancelClearAll()"
+          (keydown)="keepClearFocus($event)">
+          <h2 id="clear-title">پاک کردن همهٔ تاریخچه</h2>
+          <p id="clear-description">همهٔ آزمون‌های ذخیره‌شده برای همیشه حذف می‌شوند. این حذف دائمی است.</p>
+          <div class="button-group">
+            <button #clearCancel class="clear-cancel" type="button" (click)="cancelClearAll()">انصراف</button>
+            <button class="clear-confirm" type="button" (click)="confirmClearAll()">پاک کردن دائمی همه</button>
+          </div>
+        </section>
         <section *ngIf="pendingDeleteRecord as record" class="delete-dialog" role="alertdialog" aria-modal="true"
           aria-labelledby="delete-title" aria-describedby="delete-description" (keydown.escape)="cancelDelete()"
           (keydown.tab)="keepDeleteFocus($event)">
@@ -496,6 +510,8 @@ export class Phq9ShellComponent {
   detailReadFailed = false;
   pendingDeleteRecord: Phq9AssessmentRecord | null = null;
   deleteError: string | null = null;
+  pendingClearAll = false;
+  clearError: string | null = null;
 
   private readonly historyDateFormatter = new Intl.DateTimeFormat('fa-IR', {
     dateStyle: 'medium',
@@ -539,13 +555,59 @@ export class Phq9ShellComponent {
   @ViewChild('deleteCancel')
   private deleteCancel?: ElementRef<HTMLButtonElement>;
 
+  @ViewChild('clearAction')
+  private clearAction?: ElementRef<HTMLButtonElement>;
+
+  @ViewChild('clearCancel')
+  private clearCancel?: ElementRef<HTMLButtonElement>;
+
   openHistory(): void {
     this.deleteError = null;
+    this.clearError = null;
+    this.pendingClearAll = false;
     this.selectedDetailId = null;
     this.detailRecord = null;
     this.refreshHistory();
     this.showHistory = true;
     setTimeout(() => this.historyTitle?.nativeElement.focus());
+  }
+
+  requestClearAll(): void {
+    if (!this.historyRead?.ok || this.historyHasSkippedEntries || this.historyRecords.length === 0) return;
+    this.clearError = null;
+    this.pendingClearAll = true;
+    setTimeout(() => this.clearCancel?.nativeElement.focus());
+  }
+
+  cancelClearAll(): void {
+    this.pendingClearAll = false;
+    setTimeout(() => this.clearAction?.nativeElement.focus());
+  }
+
+  keepClearFocus(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key !== 'Tab') return;
+    const buttons = Array.from(this.host.nativeElement.querySelectorAll<HTMLButtonElement>('.clear-dialog button'));
+    if (buttons.length === 0) return;
+    const target = event.target as HTMLElement;
+    if (keyboardEvent.shiftKey && target === buttons[0]) {
+      event.preventDefault();
+      buttons[buttons.length - 1].focus();
+    } else if (!keyboardEvent.shiftKey && target === buttons[buttons.length - 1]) {
+      event.preventDefault();
+      buttons[0].focus();
+    }
+  }
+
+  confirmClearAll(): void {
+    if (!this.pendingClearAll) return;
+    const result = this.assessmentStorage.clearAll();
+    this.pendingClearAll = false;
+    this.refreshHistory();
+    if (!result.ok) {
+      this.clearError = 'تاریخچه پاک نشد. دسترسی به تاریخچه یا ذخیرهٔ تغییرات ممکن نبود.';
+    }
+    setTimeout(() => (result.ok ? this.historyTitle : this.clearAction ?? this.historyTitle)?.nativeElement.focus());
   }
 
   requestDelete(record: Phq9AssessmentRecord): void {
