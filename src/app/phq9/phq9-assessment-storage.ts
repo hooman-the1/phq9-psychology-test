@@ -10,6 +10,7 @@ import {
 
 export type Phq9StorageReadResult =
   | { readonly ok: true; readonly records: readonly Phq9AssessmentRecord[] }
+  | { readonly ok: true; readonly records: readonly Phq9AssessmentRecord[]; readonly partial: true; readonly skippedCount: number }
   | { readonly ok: false; readonly error: 'unavailable' | 'invalid-data' };
 
 export type Phq9StorageSaveResult =
@@ -38,7 +39,20 @@ export class Phq9AssessmentStorage {
       if (!isAssessmentEnvelope(value)) {
         return { ok: false, error: 'invalid-data' };
       }
-      return { ok: true, records: value.records };
+      const records: Phq9AssessmentRecord[] = [];
+      const seenIds = new Set<string>();
+      let skippedCount = 0;
+      for (const candidate of value.records) {
+        if (!isPhq9AssessmentRecord(candidate) || seenIds.has(candidate.id)) {
+          skippedCount++;
+          continue;
+        }
+        seenIds.add(candidate.id);
+        records.push(candidate);
+      }
+      return skippedCount > 0
+        ? { ok: true, records, partial: true, skippedCount }
+        : { ok: true, records };
     } catch {
       return { ok: false, error: 'invalid-data' };
     }
@@ -46,8 +60,8 @@ export class Phq9AssessmentStorage {
 
   save(assessment: Omit<Phq9AssessmentRecord, 'id' | 'createdAt'>): Phq9StorageSaveResult {
     const existing = this.read();
-    if (!existing.ok) {
-      return existing;
+    if (!existing.ok || ('partial' in existing && existing.partial)) {
+      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
     }
 
     let id: string;
@@ -84,20 +98,10 @@ export class Phq9AssessmentStorage {
   }
 }
 
-function isAssessmentEnvelope(value: unknown): value is Phq9AssessmentEnvelope {
+function isAssessmentEnvelope(value: unknown): value is { schemaVersion: typeof PHQ9_ASSESSMENT_SCHEMA_VERSION; records: unknown[] } {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
   }
   const envelope = value as Record<string, unknown>;
-  if (envelope['schemaVersion'] !== PHQ9_ASSESSMENT_SCHEMA_VERSION || !Array.isArray(envelope['records'])) {
-    return false;
-  }
-  const seenIds = new Set<string>();
-  return envelope['records'].every((record: unknown) => {
-    if (!isPhq9AssessmentRecord(record) || seenIds.has(record.id)) {
-      return false;
-    }
-    seenIds.add(record.id);
-    return true;
-  });
+  return envelope['schemaVersion'] === PHQ9_ASSESSMENT_SCHEMA_VERSION && Array.isArray(envelope['records']);
 }

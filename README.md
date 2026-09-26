@@ -28,11 +28,16 @@ Successful submissions are stored in this browser's `localStorage` under
 `phq9.assessments` as a version 1 JSON envelope. Each record keeps the nine
 answers, score, severity, UTC submission time, and a snapshot of the displayed
 result. The `Phq9AssessmentStorage.read()` method returns saved records for the
-future history view. Data stays in the same browser profile and is not sent to a
-server or synchronized across devices.
+future history view. A partially corrupt v1 envelope returns valid records in
+stored order with a partial-data status; invalid and duplicate records are skipped.
+Invalid envelopes, unsupported versions, and storage read failures return distinct
+failures. Reads never rewrite stored data, and saving refuses to overwrite data
+that could not be fully read. Data stays in the same browser profile and is not sent
+to a server or synchronized across devices.
 
 If storage cannot be read or written, the result remains visible for the current
 page session and the app shows an unsaved notice. The storage service returns an
 explicit failure to callers. It does not overwrite existing data it cannot
-safely read. See `_docs/phq9-assessment-schema.md` for the v1 data contract;
-detailed recovery from malformed or older data is tracked in issue #17.
+safely read. A notice on opening the app explains when history could not be fully
+loaded, and a failed submission shows an unsaved notice. See
+`_docs/phq9-assessment-schema.md` for the v1 data contract.

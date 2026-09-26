@@ -46,6 +46,9 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
   imports: [CommonModule],
   template: `
     <main dir="rtl">
+      <p *ngIf="historyNotice" class="history-notice validation-summary" role="alert">
+        {{ historyNotice }}
+      </p>
       <section *ngIf="!submitted" class="questionnaire" aria-labelledby="questionnaire-title">
         <h1 id="questionnaire-title">تست تشخیص افسردگی <span>PHQ-9</span></h1>
         <div class="rule"></div>
@@ -343,6 +346,12 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
 })
 export class Phq9ShellComponent {
   private readonly assessmentStorage = inject(Phq9AssessmentStorage);
+  private readonly initialHistory = this.assessmentStorage.read();
+  readonly historyNotice = !this.initialHistory.ok
+    ? 'تاریخچه ذخیره‌شده به‌طور کامل بارگذاری نشد. می‌توانید آزمون را ادامه دهید.'
+    : 'partial' in this.initialHistory && this.initialHistory.partial
+      ? 'برخی از موارد تاریخچه ذخیره‌شده نامعتبر بودند و بارگذاری نشدند. می‌توانید آزمون را ادامه دهید.'
+      : null;
   readonly questions = PHQ9_QUESTIONS;
   readonly answerChoices = PHQ9_ANSWER_CHOICES;
   readonly answers: Array<number | null> = Array(this.questions.length).fill(null);
