@@ -12,4 +12,4 @@ npm run test:headless
 npm run build
 ```
 
-Run the development server with `npm start`.
+The headless test script uses a no-GPU Chrome launcher for reliable execution in CI and restricted desktop environments. Run the development server with `npm start`.
