@@ -50,7 +50,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
       <p *ngIf="!showHistory && historyNotice" class="history-notice validation-summary" role="alert">
         {{ historyNotice }}
       </p>
-      <section *ngIf="showHistory" class="questionnaire history-view" aria-labelledby="history-title">
+      <section *ngIf="showHistory && selectedDetailId === null" class="questionnaire history-view" aria-labelledby="history-title">
         <h1 #historyTitle id="history-title" tabindex="-1">تاریخچه آزمون‌ها</h1>
         <div class="rule"></div>
         <p *ngIf="historyRead && !historyRead.ok" class="validation-summary" role="alert">
@@ -67,11 +67,38 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
               <p>امتیاز: {{ record.totalScore }} از ۲۷</p>
               <p>شدت افسردگی: {{ record.result.severityLabel }}</p>
+              <button type="button" [attr.aria-label]="'نمایش جزئیات آزمون ' + (index + 1)" (click)="openDetail(record.id)">نمایش جزئیات</button>
             </li>
           </ol>
         </ng-container>
         <div class="button-group">
           <button type="button" (click)="closeHistory()">{{ submitted ? 'بازگشت به نتیجه' : 'بازگشت به آزمون' }}</button>
+        </div>
+      </section>
+      <section *ngIf="showHistory && selectedDetailId !== null" class="questionnaire detail-view" aria-labelledby="detail-title">
+        <h1 #detailTitle id="detail-title" tabindex="-1">جزئیات آزمون ذخیره‌شده</h1>
+        <div class="rule"></div>
+        <ng-container *ngIf="detailRecord as record">
+          <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
+          <ol class="detail-answers">
+            <li *ngFor="let question of questions; let index = index">
+              <p>{{ question }}</p>
+              <p>پاسخ: {{ record.answers[index] }} — {{ answerChoices[record.answers[index]].label }}</p>
+            </li>
+          </ol>
+          <p>مجموع امتیاز: {{ record.totalScore }} از ۲۷</p>
+          <p>شدت افسردگی: {{ record.result.severityLabel }} <span class="detail-category">({{ record.severityCategory }})</span></p>
+          <p>توصیه: {{ record.result.recommendation }}</p>
+          <ul *ngIf="record.result.warnings.length > 0" aria-label="هشدارها">
+            <li *ngFor="let warning of record.result.warnings" class="detail-warning">{{ warning }}</li>
+          </ul>
+        </ng-container>
+        <p *ngIf="detailMissing" role="alert">این آزمون دیگر در تاریخچه وجود ندارد.</p>
+        <p *ngIf="detailReadFailed" class="validation-summary" role="alert">
+          تاریخچه ذخیره‌شده بارگذاری نشد. داده‌های ذخیره‌شده تغییر نکرده‌اند.
+        </p>
+        <div class="button-group">
+          <button type="button" (click)="closeDetail()">بازگشت به تاریخچه</button>
         </div>
       </section>
       <section *ngIf="!showHistory && !submitted" class="questionnaire" aria-labelledby="questionnaire-title">
@@ -356,6 +383,17 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         font-size: 1.125rem;
       }
 
+      .detail-answers {
+        display: grid;
+        gap: 0.75rem;
+        padding-inline-start: 1.5rem;
+      }
+
+      .detail-answers li {
+        padding: 0.75rem;
+        border: 1px solid #e0e0e0;
+      }
+
       progress {
         display: block;
         width: 100%;
@@ -399,6 +437,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
   ],
 })
 export class Phq9ShellComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly assessmentStorage = inject(Phq9AssessmentStorage);
   private readonly initialHistory = this.assessmentStorage.read();
   readonly historyNotice = !this.initialHistory.ok
@@ -418,6 +457,10 @@ export class Phq9ShellComponent {
   showHistory = false;
   historyRead: Phq9StorageReadResult | null = null;
   historyRecords: readonly Phq9AssessmentRecord[] = [];
+  selectedDetailId: string | null = null;
+  detailRecord: Phq9AssessmentRecord | null = null;
+  detailMissing = false;
+  detailReadFailed = false;
 
   private readonly historyDateFormatter = new Intl.DateTimeFormat('fa-IR', {
     dateStyle: 'medium',
@@ -449,6 +492,9 @@ export class Phq9ShellComponent {
   @ViewChild('historyTitle')
   private historyTitle?: ElementRef<HTMLElement>;
 
+  @ViewChild('detailTitle')
+  private detailTitle?: ElementRef<HTMLElement>;
+
   @ViewChild('questionnaireHistoryAction')
   private questionnaireHistoryAction?: ElementRef<HTMLElement>;
 
@@ -456,6 +502,46 @@ export class Phq9ShellComponent {
   private resultHistoryAction?: ElementRef<HTMLElement>;
 
   openHistory(): void {
+    this.selectedDetailId = null;
+    this.detailRecord = null;
+    this.refreshHistory();
+    this.showHistory = true;
+    setTimeout(() => this.historyTitle?.nativeElement.focus());
+  }
+
+  openDetail(id: string): void {
+    this.selectedDetailId = id;
+    this.detailRecord = null;
+    this.detailMissing = false;
+    this.detailReadFailed = false;
+    const read = this.assessmentStorage.read();
+    if (!read.ok) {
+      this.detailReadFailed = true;
+      this.historyRead = read;
+      this.historyRecords = [];
+    } else {
+      this.detailRecord = read.records.find((record) => record.id === id) ?? null;
+      this.detailMissing = this.detailRecord === null;
+    }
+    setTimeout(() => this.detailTitle?.nativeElement.focus());
+  }
+
+  closeDetail(): void {
+    const id = this.selectedDetailId;
+    this.selectedDetailId = null;
+    this.detailRecord = null;
+    this.detailMissing = false;
+    this.detailReadFailed = false;
+    this.refreshHistory();
+    setTimeout(() => {
+      const action = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('.history-view [data-record-id]'))
+        .find((row) => row.getAttribute('data-record-id') === id)
+        ?.querySelector<HTMLButtonElement>('button');
+      (action ?? this.historyTitle?.nativeElement)?.focus();
+    });
+  }
+
+  private refreshHistory(): void {
     this.historyRead = this.assessmentStorage.read();
     this.historyRecords = this.historyRead.ok
       ? this.historyRead.records
@@ -466,8 +552,6 @@ export class Phq9ShellComponent {
         )
         .map(({ record }) => record)
       : [];
-    this.showHistory = true;
-    setTimeout(() => this.historyTitle?.nativeElement.focus());
   }
 
   closeHistory(): void {
