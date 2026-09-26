@@ -4,6 +4,7 @@ export {
   PHQ9_QUESTIONS,
 } from './phq9-questionnaire';
 export { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
+export { calculatePhq9Score, Phq9Score, Phq9SeverityCategory } from './phq9-scoring';
 export {
   Phq9ValidationResult,
   validatePhq9Answers,

@@ -5,6 +5,7 @@ import {
   PHQ9_ANSWER_CHOICES,
   PHQ9_QUESTIONS,
 } from './phq9-questionnaire';
+import { calculatePhq9Score, Phq9Score } from './phq9-scoring';
 import {
   Phq9ValidationResult,
   validatePhq9Answers,
@@ -254,6 +255,7 @@ export class Phq9ShellComponent {
   readonly answers: Array<number | null> = Array(this.questions.length).fill(null);
   validationErrors = new Set<number>();
   validationResult: Phq9ValidationResult | null = null;
+  score: Phq9Score | null = null;
   submitted = false;
   currentQuestionIndex = 0;
 
@@ -270,11 +272,16 @@ export class Phq9ShellComponent {
   }
 
   submitAssessment(): Phq9ValidationResult {
-    this.validationResult = validatePhq9Answers(this.answers);
+    const requiredAnswers = validatePhq9Answers(this.answers);
+    this.score = requiredAnswers.isValid ? calculatePhq9Score(this.answers) : null;
+    this.validationResult = {
+      isValid: requiredAnswers.isValid && this.score !== null,
+      missingQuestionIndices: requiredAnswers.missingQuestionIndices,
+    };
     this.validationErrors = new Set(this.validationResult.missingQuestionIndices);
     this.submitted = this.validationResult.isValid;
 
-    if (!this.validationResult.isValid) {
+    if (this.validationResult.missingQuestionIndices.length > 0) {
       this.currentQuestionIndex = this.validationResult.missingQuestionIndices[0];
       setTimeout(() => this.validationSummary?.nativeElement.focus());
     }
