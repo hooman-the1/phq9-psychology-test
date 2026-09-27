@@ -65,7 +65,8 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <ng-container *ngIf="historyRead?.ok">
           <p *ngIf="historyRecords.length === 0" class="history-empty">هنوز آزمونی در تاریخچه ذخیره نشده است.</p>
           <ol *ngIf="historyRecords.length > 0" class="history-list">
-            <li *ngFor="let record of historyRecords; let index = index" [attr.data-record-id]="record.id">
+            <li *ngFor="let record of historyRecords; let index = index" [attr.data-record-id]="record.id"
+              [attr.data-list-number]="index + 1 | latinToPersianNumbers">
               <h2>آزمون {{ index + 1 | latinToPersianNumbers }}</h2>
               <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
               <p>امتیاز: {{ record.totalScore | latinToPersianNumbers }} از ۲۷</p>
@@ -109,7 +110,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <ng-container *ngIf="detailRecord as record">
           <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
           <ol class="detail-answers">
-            <li *ngFor="let question of questions; let index = index">
+            <li *ngFor="let question of questions; let index = index" [attr.data-list-number]="index + 1 | latinToPersianNumbers">
               <p>{{ question }}</p>
               <p>پاسخ: {{ record.answers[index] | latinToPersianNumbers }} — {{ answerChoices[record.answers[index]].label }}</p>
             </li>
@@ -444,6 +445,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
       .detail-answers li {
         padding: 0.75rem;
         border: 1px solid #e0e0e0;
+      }
+
+      .history-list li::marker,
+      .detail-answers li::marker {
+        content: attr(data-list-number) '. ';
       }
 
       progress {

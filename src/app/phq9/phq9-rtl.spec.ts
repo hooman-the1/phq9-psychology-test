@@ -46,14 +46,16 @@ describe('Persian presentation', () => {
   });
 
   it('shows Persian dates, row numbers, detail answers, and confirmation scores', () => {
+    const root: HTMLElement = fixture.nativeElement;
+    root.style.width = '375px';
     fixture.componentInstance.answers.fill(3);
     fixture.componentInstance.submitAssessment();
     fixture.detectChanges();
     fixture.componentInstance.openHistory();
     fixture.detectChanges();
-    const root: HTMLElement = fixture.nativeElement;
     const row = root.querySelector('.history-list li') as HTMLElement;
     expect(row.querySelector('h2')?.textContent).toContain('\u06f1');
+    expect(getComputedStyle(row, '::marker').content).toBe('"\u06f1. "');
     expect(row.querySelector('time')?.textContent).not.toMatch(/[0-9]/);
     expect(row.querySelector('time')?.getAttribute('datetime')).toMatch(/[0-9]/);
     expect(row.textContent).toContain('\u06f2\u06f7');
@@ -65,6 +67,9 @@ describe('Persian presentation', () => {
     fixture.componentInstance.openDetail(fixture.componentInstance.historyRecords[0].id);
     fixture.detectChanges();
     expect(root.querySelector('.detail-answers li')?.textContent).toContain('\u06f3 \u2014');
+    const detailRows = root.querySelectorAll('.detail-answers li');
+    expect(getComputedStyle(detailRows[0], '::marker').content).toBe('"\u06f1. "');
+    expect(getComputedStyle(detailRows[8], '::marker').content).toBe('"\u06f9. "');
   });
 
   it('renders a test-only mixed Persian sample with an isolated Latin token', () => {
