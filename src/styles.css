@@ -4,3 +4,167 @@ body {
   min-height: 100%;
   font-family: Arial, sans-serif;
 }
+
+/* Active PHQ-9 assessment and result surfaces */
+main:has(> .assessment-view),
+main:has(> .result-card) {
+  padding-block: 0;
+}
+
+.assessment-view,
+.result-card {
+  box-sizing: border-box;
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  border-color: #e4e5e9;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+  font-family: Tahoma, Arial, sans-serif;
+}
+
+.assessment-view .rule,
+.result-card .rule {
+  background: #e0e0e0;
+}
+
+.assessment-view > .rule,
+.result-card > .rule {
+  margin: 16px 0 20px;
+}
+
+.assessment-view .question-card {
+  padding: 20px;
+  border: 1px solid #e4e5e9;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 10%);
+}
+
+.assessment-view .intro-text {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.assessment-view .question {
+  line-height: 24px;
+}
+
+.assessment-view fieldset {
+  gap: 10px;
+}
+
+.assessment-view label {
+  min-height: 32px;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.assessment-view input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #3f51b5;
+}
+
+.assessment-view input[type='radio']:focus-visible {
+  outline: 3px solid #1a73e8;
+  outline-offset: 3px;
+}
+
+.assessment-actions {
+  align-items: center;
+  margin-top: 20px;
+}
+
+.assessment-actions button,
+.result-actions button {
+  min-height: 36px;
+  border: 0;
+  font-weight: 600;
+}
+
+.assessment-actions .previous-action,
+.result-actions .result-history-action {
+  background: transparent;
+  color: #3f51b5;
+  box-shadow: none;
+}
+
+.assessment-actions .primary-action {
+  background: #3f51b5;
+  color: #fff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 22%);
+}
+
+.assessment-actions .submit-action {
+  background: #ad1457;
+}
+
+.assessment-actions button:disabled {
+  background: #e0e0e0;
+  color: #757575;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.assessment-view progress {
+  height: 5px;
+  margin-top: 20px;
+  border: 0;
+  border-radius: 5px;
+  background: #dfe3f3;
+  overflow: hidden;
+  accent-color: #3f51b5;
+}
+
+.assessment-view progress::-webkit-progress-bar {
+  background: #dfe3f3;
+}
+
+.assessment-view progress::-webkit-progress-value {
+  border-radius: 5px;
+  background: #3f51b5;
+}
+
+.assessment-view progress::-moz-progress-bar {
+  border-radius: 5px;
+  background: #3f51b5;
+}
+
+.result-card > p {
+  margin: 8px 0;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.result-card .result-severity {
+  color: #263238;
+}
+
+.result-card .result-severity span {
+  font-weight: 700;
+}
+
+.result-card .result-gauge {
+  margin-top: 30px;
+}
+
+.result-actions {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.result-actions .restart-action {
+  width: 100%;
+  border: 1px solid #3f51b5;
+  background: #fff;
+  color: #3f51b5;
+}
+
+.result-actions .result-history-action {
+  align-self: center;
+}

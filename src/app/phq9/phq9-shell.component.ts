@@ -130,33 +130,32 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           <button type="button" (click)="closeDetail()">بازگشت به تاریخچه</button>
         </div>
       </section>
-      <section *ngIf="!showHistory && !submitted" class="questionnaire" aria-labelledby="questionnaire-title">
+      <section *ngIf="!showHistory && !submitted" class="questionnaire assessment-view" aria-labelledby="questionnaire-title">
         <h1 #questionnaireTitle id="questionnaire-title" tabindex="-1">تست تشخیص افسردگی <bdi dir="ltr">PHQ-9</bdi></h1>
         <div class="rule"></div>
-
-        <p class="intro-text">
-          در <b>دو هفته گذشته</b>، هر چند وقت یک‌بار با هر یک از مشکلات زیر درگیر
-          بوده‌اید یا این مسائل شما را آزار داده‌اند؟
-        </p>
-        <div class="rule"></div>
-
-        <section
-          #validationSummary
-          class="validation-summary"
-          aria-live="assertive"
-          aria-labelledby="validation-summary-title"
-          [hidden]="validationErrors.size === 0"
-          tabindex="-1"
-        >
-          <h2 id="validation-summary-title">لطفاً به سؤال‌های مشخص‌شده پاسخ دهید.</h2>
-          <ul>
-            <li *ngFor="let questionIndex of validationErrors">
-              سؤال {{ questionIndex + 1 | latinToPersianNumbers }} نیاز به پاسخ دارد.
-            </li>
-          </ul>
-        </section>
-
         <section class="question-card" aria-live="polite">
+          <p class="intro-text">
+            در <b>دو هفته گذشته</b>، هر چند وقت یک‌بار با هر یک از مشکلات زیر درگیر
+            بوده‌اید یا این مسائل شما را آزار داده‌اند؟
+          </p>
+          <div class="rule"></div>
+
+          <section
+            #validationSummary
+            class="validation-summary"
+            aria-live="assertive"
+            aria-labelledby="validation-summary-title"
+            [hidden]="validationErrors.size === 0"
+            tabindex="-1"
+          >
+            <h2 id="validation-summary-title">لطفاً به سؤال‌های مشخص‌شده پاسخ دهید.</h2>
+            <ul>
+              <li *ngFor="let questionIndex of validationErrors">
+                سؤال {{ questionIndex + 1 | latinToPersianNumbers }} نیاز به پاسخ دارد.
+              </li>
+            </ul>
+          </section>
+
           <p class="question">
             {{ currentQuestionIndex + 1 | latinToPersianNumbers }}. {{ questions[currentQuestionIndex] }}
           </p>
@@ -186,8 +185,9 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
             پاسخ به این سؤال ضروری است.
           </p>
 
-          <div class="button-group">
+          <div class="button-group assessment-actions">
             <button
+              class="previous-action"
               type="button"
               (click)="previousQuestion()"
               [disabled]="currentQuestionIndex === 0"
@@ -195,6 +195,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               قبلی
             </button>
             <button
+              class="primary-action"
               *ngIf="currentQuestionIndex < questions.length - 1"
               type="button"
               (click)="nextQuestion()"
@@ -202,6 +203,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               بعدی
             </button>
             <button
+              class="primary-action submit-action"
               *ngIf="currentQuestionIndex === questions.length - 1"
               type="button"
               (click)="submitAssessment()"
@@ -224,7 +226,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         <h1 id="result-title">نتیجه تست</h1>
         <div class="rule"></div>
         <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total | latinToPersianNumbers }}</p>
-        <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
+        <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> <span [style.color]="score?.category === 'mild' ? '#795900' : details.color">{{ details.severity }}</span></p>
         <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
         <p *ngIf="saveFailed" class="validation-error" role="alert">
           نتیجه ذخیره نشد. می‌توانید آن را در این صفحه ببینید، اما پس از بستن صفحه باقی نمی‌ماند.
@@ -259,9 +261,9 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           </svg>
         </div>
         <p class="gauge-caption">{{ score?.total | latinToPersianNumbers }} امتیاز</p>
-        <div class="button-group">
-          <button type="button" (click)="restartAssessment()">انجام مجدد تست</button>
-          <button #resultHistoryAction type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
+        <div class="button-group result-actions">
+          <button class="restart-action" type="button" (click)="restartAssessment()">انجام مجدد تست</button>
+          <button #resultHistoryAction class="result-history-action" type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
         </div>
       </section>
     </main>
