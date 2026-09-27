@@ -1,8 +1,24 @@
+@font-face {
+  font-family: Vazir;
+  src: url('./assets/fonts/Vazir.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Vazir;
+  src: url('./assets/fonts/Vazir-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 html,
 body {
   margin: 0;
   min-height: 100%;
-  font-family: Arial, sans-serif;
+  font-family: Vazir, Tahoma, Arial, sans-serif;
 }
 
 /* Active PHQ-9 assessment and result surfaces */
@@ -20,7 +36,7 @@ main:has(> .result-card) {
   border-color: #e4e5e9;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
-  font-family: Tahoma, Arial, sans-serif;
+  font-family: Vazir, Tahoma, Arial, sans-serif;
 }
 
 .assessment-view .rule,

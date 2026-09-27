@@ -274,7 +274,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         display: block;
         min-height: 100vh;
         color: #263238;
-        font-family: Arial, sans-serif;
+        font-family: Vazir, Tahoma, Arial, sans-serif;
         direction: rtl;
       }
 
