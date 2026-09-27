@@ -2,7 +2,13 @@ import { TestBed } from '@angular/core/testing';
 
 import { Phq9ShellComponent } from './phq9-shell.component';
 
-describe('PHQ-9 local typography', () => {
+describe('PHQ-9 local assets', () => {
+  it('serves the local browser icon', async () => {
+    const response = await fetch('/favicon.png');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toContain('image/png');
+  });
+
   it('uses loaded regular and bold Vazir faces for the questionnaire', async () => {
     await TestBed.configureTestingModule({ imports: [Phq9ShellComponent] }).compileComponents();
     const fixture = TestBed.createComponent(Phq9ShellComponent);
