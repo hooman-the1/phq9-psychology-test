@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Phq9ShellComponent } from './phq9-shell.component';
+import { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 
 describe('PHQ-9 result gauge', () => {
   let fixture: ComponentFixture<Phq9ShellComponent>;
@@ -38,7 +39,7 @@ describe('PHQ-9 result gauge', () => {
       expect(gauge.getAttribute('aria-valuemin')).toBe('0');
       expect(gauge.getAttribute('aria-valuemax')).toBe('27');
       expect(gauge.getAttribute('aria-valuenow')).toBe(String(total));
-      expect(gauge.getAttribute('aria-valuetext')).toContain(String(total));
+      expect(gauge.getAttribute('aria-valuetext')).toContain(new LatinToPersianNumbersPipe().transform(total) as string);
       expect(gauge.getAttribute('aria-valuetext')).toContain(accent.textContent!.trim().split(':').pop()!.trim());
       expect(svg.getAttribute('aria-hidden')).toBe('true');
       expect(svg.getAttribute('viewBox')).toBe('0 0 220 130');
@@ -57,7 +58,7 @@ describe('PHQ-9 result gauge', () => {
       expect(Number(match![1])).toBeCloseTo(110 - 90 * Math.cos(Math.PI * fraction), 4);
       expect(Number(match![2])).toBeCloseTo(110 - 90 * Math.sin(Math.PI * fraction), 4);
       expect(Number(match![3])).toBeCloseTo(-90 + 180 * fraction, 4);
-      expect(caption.textContent).toContain(String(total));
+      expect(caption.textContent).toContain(new LatinToPersianNumbersPipe().transform(total) as string);
       expect(accent.style.borderBottomColor).toBe(toRgb(color));
     });
   }

@@ -41,7 +41,7 @@ describe('PHQ-9 offline assessment flow', () => {
     expect(component.submitAssessment().isValid).toBeTrue();
     fixture.detectChanges();
     const result = fixture.nativeElement.querySelector('.result-card') as HTMLElement;
-    expect(result.querySelector('.result-total')?.textContent).toContain('12');
+    expect(result.querySelector('.result-total')?.textContent).toContain('۱۲');
     expect(result.querySelector('.result-severity')?.textContent).toContain('افسردگی متوسط');
     expect(result.querySelector('.result-recommendation')?.textContent).toContain('صحبت با یک روانشناس یا مشاور توصیه می‌شود.');
     expect(result.querySelector('.result-gauge')?.getAttribute('aria-valuenow')).toBe('12');

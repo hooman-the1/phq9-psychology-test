@@ -60,7 +60,7 @@ async function complete(answers) {
     const selected = await evaluate(`(() => { const x = document.querySelectorAll('input[type=radio]')[${answers[index]}]; if (!x) return false; x.click(); return true; })()`);
     if (!selected) throw new Error(`Radio missing at question ${index + 1}`);
     await wait(30);
-    await clickButton(index === 8 ? 'Submit' : 'بعدی');
+    await clickButton(index === 8 ? 'ثبت پاسخ‌ها' : 'بعدی');
   }
 }
 await send('Page.enable');
@@ -88,7 +88,7 @@ assert.equal(detailAfterRefresh, detailBeforeRefresh, 'Saved detail changed afte
 await clickButton('بازگشت به تاریخچه');
 await clickButton('بازگشت به آزمون');
 for (let index = 0; index < 8; index++) await clickButton('بعدی');
-await clickButton('Submit');
+await clickButton('ثبت پاسخ‌ها');
 await state('validation');
 for (const [name, score, severity, recommendation] of [
   ['minimal', 0, 'حداقل افسردگی', 'نیازی به اقدام خاصی نیست، اما مراقب حال و هوای خود باشید.'],

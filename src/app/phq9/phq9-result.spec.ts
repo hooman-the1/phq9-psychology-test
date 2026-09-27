@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Phq9ShellComponent } from './phq9-shell.component';
+import { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 
 describe('PHQ-9 result rendering', () => {
   let fixture: ComponentFixture<Phq9ShellComponent>;
@@ -32,7 +33,7 @@ describe('PHQ-9 result rendering', () => {
 
       const result = fixture.nativeElement.querySelector('.result-card') as HTMLElement;
       expect(result).not.toBeNull();
-      expect(result.querySelector('.result-total')?.textContent).toContain(String(total));
+      expect(result.querySelector('.result-total')?.textContent).toContain(new LatinToPersianNumbersPipe().transform(total) as string);
       expect(result.querySelector('.result-severity')?.textContent).toContain(label);
       expect(result.querySelectorAll('.result-recommendation').length).toBe(1);
       expect(result.querySelector('.result-recommendation')?.textContent?.trim()).toBe(`توصیه: ${recommendation}`);

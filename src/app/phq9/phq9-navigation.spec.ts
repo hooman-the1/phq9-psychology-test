@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { Phq9ShellComponent } from './phq9-shell.component';
+import { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 import { PHQ9_ANSWER_CHOICES, PHQ9_QUESTIONS } from './phq9-questionnaire';
 
 describe('PHQ-9 question navigation', () => {
@@ -28,14 +29,15 @@ describe('PHQ-9 question navigation', () => {
   }
 
   function expectPosition(index: number): void {
+    const digits = new LatinToPersianNumbersPipe();
     const question = element().querySelector('.question') as HTMLElement;
     const progress = element().querySelector('progress') as HTMLProgressElement;
 
-    expect(question.textContent?.trim()).toBe(`${index + 1}. ${PHQ9_QUESTIONS[index]}`);
+    expect(question.textContent?.trim()).toBe(`${digits.transform(index + 1)}. ${PHQ9_QUESTIONS[index]}`);
     expect(progress.value).toBe(index + 1);
     expect(progress.max).toBe(PHQ9_QUESTIONS.length);
     expect(progress.getAttribute('aria-label')).toBe(
-      `سؤال ${index + 1} از ${PHQ9_QUESTIONS.length}`,
+      `سؤال ${digits.transform(index + 1)} از ${digits.transform(PHQ9_QUESTIONS.length)}`,
     );
     expect(choices().length).toBe(PHQ9_ANSWER_CHOICES.length);
     expect(element().querySelectorAll('.question').length).toBe(1);
@@ -63,7 +65,7 @@ describe('PHQ-9 question navigation', () => {
 
     expect(controls().length).toBe(2);
     expect(controls()[0].disabled).toBeFalse();
-    expect(controls()[1].textContent?.trim()).toBe('Submit');
+    expect(controls()[1].textContent?.trim()).toBe('ثبت پاسخ‌ها');
     expect(controls().some((control) => control.textContent?.trim() === 'بعدی')).toBeFalse();
     expect(fixture.componentInstance.submitted).toBeFalse();
     expect(fixture.componentInstance.validationResult).toBeNull();

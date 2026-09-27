@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 
 import { PHQ9_ASSESSMENT_STORAGE_KEY, Phq9AssessmentRecord } from './phq9-assessment-record';
 import { Phq9ShellComponent } from './phq9-shell.component';
+import { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 import { PHQ9_ANSWER_CHOICES, PHQ9_QUESTIONS } from './phq9-questionnaire';
 
 describe('saved assessment detail', () => {
@@ -67,10 +68,10 @@ describe('saved assessment detail', () => {
     expect(answers.length).toBe(9);
     answers.forEach((item, index) => {
       expect(item.textContent).toContain(PHQ9_QUESTIONS[index]);
-      expect(item.textContent).toContain(String(first.answers[index]));
+      expect(item.textContent).toContain(new LatinToPersianNumbersPipe().transform(first.answers[index]) as string);
       expect(item.textContent).toContain(PHQ9_ANSWER_CHOICES[first.answers[index]].label);
     });
-    expect(detail.textContent).toContain('12');
+    expect(detail.textContent).toContain('۱۲');
     expect(detail.textContent).toContain('Saved category');
     expect(detail.textContent).toContain('Old advice');
     expect(detail.textContent).not.toContain('Warning one');

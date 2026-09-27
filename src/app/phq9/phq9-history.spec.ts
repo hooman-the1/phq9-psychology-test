@@ -64,7 +64,7 @@ describe('PHQ-9 history', () => {
     expect(items.map((item) => item.getAttribute('data-record-id'))).toEqual(['same-a', 'same-b', 'older']);
     expect(items[0].querySelector('time')?.getAttribute('datetime')).toBe('2026-09-26T10:30:00.000Z');
     expect(items[0].querySelector('time')?.textContent?.trim()).toBeTruthy();
-    expect(items[0].textContent).toContain('27');
+    expect(items[0].textContent).toContain('۲۷');
     expect(items[0].textContent).toContain('افسردگی شدید');
     expect(write).not.toHaveBeenCalled();
     expect(localStorage.getItem(PHQ9_ASSESSMENT_STORAGE_KEY)).toBe(bytes);

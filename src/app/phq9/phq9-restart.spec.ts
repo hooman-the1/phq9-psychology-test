@@ -95,7 +95,7 @@ describe('PHQ-9 assessment restart', () => {
     expect(records[1].id).not.toBe(firstRecord.id);
     expect(records[1].answers).toEqual(Array(9).fill(3));
     expect(records[1].totalScore).toBe(27);
-    expect(fixture.nativeElement.querySelector('.result-total')?.textContent).toContain('27');
+    expect(fixture.nativeElement.querySelector('.result-total')?.textContent).toContain('۲۷');
 
     const secondBytes = localStorage.getItem(storageKey);
     retakeButton()!.click();

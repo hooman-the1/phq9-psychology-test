@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, inject, ViewChild } from '@angular/core';
 
+import { LatinToPersianNumbersPipe } from './latin-to-persian-numbers.pipe';
 import { Phq9AssessmentStorage, Phq9StorageReadResult } from './phq9-assessment-storage';
 import { Phq9AssessmentRecord } from './phq9-assessment-record';
 import {
@@ -44,7 +45,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
 @Component({
   selector: 'app-phq9-shell',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, LatinToPersianNumbersPipe],
   template: `
     <main dir="rtl">
       <p *ngIf="!showHistory && historyNotice" class="history-notice validation-summary" role="alert">
@@ -65,13 +66,13 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           <p *ngIf="historyRecords.length === 0" class="history-empty">هنوز آزمونی در تاریخچه ذخیره نشده است.</p>
           <ol *ngIf="historyRecords.length > 0" class="history-list">
             <li *ngFor="let record of historyRecords; let index = index" [attr.data-record-id]="record.id">
-              <h2>آزمون {{ index + 1 }}</h2>
+              <h2>آزمون {{ index + 1 | latinToPersianNumbers }}</h2>
               <p>زمان ثبت: <time [attr.datetime]="record.createdAt">{{ formatHistoryDate(record.createdAt) }}</time></p>
-              <p>امتیاز: {{ record.totalScore }} از ۲۷</p>
+              <p>امتیاز: {{ record.totalScore | latinToPersianNumbers }} از ۲۷</p>
               <p>شدت افسردگی: {{ record.result.severityLabel }}</p>
-              <button type="button" [attr.aria-label]="'نمایش جزئیات آزمون ' + (index + 1)" (click)="openDetail(record.id)">نمایش جزئیات</button>
+              <button type="button" [attr.aria-label]="'نمایش جزئیات آزمون ' + (index + 1 | latinToPersianNumbers)" (click)="openDetail(record.id)">نمایش جزئیات</button>
               <button *ngIf="!historyHasSkippedEntries" class="history-delete" type="button"
-                [attr.aria-label]="'حذف آزمون ' + (index + 1)" (click)="requestDelete(record)">حذف آزمون</button>
+                [attr.aria-label]="'حذف آزمون ' + (index + 1 | latinToPersianNumbers)" (click)="requestDelete(record)">حذف آزمون</button>
             </li>
           </ol>
           <div *ngIf="historyRecords.length > 0 && !historyHasSkippedEntries" class="button-group">
@@ -92,7 +93,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           aria-labelledby="delete-title" aria-describedby="delete-description" (keydown.escape)="cancelDelete()"
           (keydown.tab)="keepDeleteFocus($event)">
           <h2 id="delete-title">حذف آزمون ذخیره‌شده</h2>
-          <p id="delete-description">آزمون ثبت‌شده در {{ formatHistoryDate(record.createdAt) }} با امتیاز {{ record.totalScore }} از ۲۷ برای همیشه حذف می‌شود. این حذف دائمی است.</p>
+          <p id="delete-description">آزمون ثبت‌شده در {{ formatHistoryDate(record.createdAt) }} با امتیاز {{ record.totalScore | latinToPersianNumbers }} از ۲۷ برای همیشه حذف می‌شود. این حذف دائمی است.</p>
           <div class="button-group">
             <button #deleteCancel class="delete-cancel" type="button" (click)="cancelDelete()">انصراف</button>
             <button class="delete-confirm" type="button" (click)="confirmDelete()">حذف دائمی</button>
@@ -110,11 +111,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           <ol class="detail-answers">
             <li *ngFor="let question of questions; let index = index">
               <p>{{ question }}</p>
-              <p>پاسخ: {{ record.answers[index] }} — {{ answerChoices[record.answers[index]].label }}</p>
+              <p>پاسخ: {{ record.answers[index] | latinToPersianNumbers }} — {{ answerChoices[record.answers[index]].label }}</p>
             </li>
           </ol>
-          <p>مجموع امتیاز: {{ record.totalScore }} از ۲۷</p>
-          <p>شدت افسردگی: {{ record.result.severityLabel }} <span class="detail-category">({{ record.severityCategory }})</span></p>
+          <p>مجموع امتیاز: {{ record.totalScore | latinToPersianNumbers }} از ۲۷</p>
+          <p>شدت افسردگی: {{ record.result.severityLabel }} <bdi class="detail-category" dir="ltr">({{ record.severityCategory }})</bdi></p>
           <p>توصیه: {{ record.result.recommendation }}</p>
           <ul *ngIf="record.result.warnings.length > 0" aria-label="هشدارها">
             <li *ngFor="let warning of record.result.warnings" class="detail-warning">{{ warning }}</li>
@@ -129,7 +130,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         </div>
       </section>
       <section *ngIf="!showHistory && !submitted" class="questionnaire" aria-labelledby="questionnaire-title">
-        <h1 #questionnaireTitle id="questionnaire-title" tabindex="-1">تست تشخیص افسردگی <span>PHQ-9</span></h1>
+        <h1 #questionnaireTitle id="questionnaire-title" tabindex="-1">تست تشخیص افسردگی <bdi dir="ltr">PHQ-9</bdi></h1>
         <div class="rule"></div>
 
         <p class="intro-text">
@@ -146,17 +147,17 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           [hidden]="validationErrors.size === 0"
           tabindex="-1"
         >
-          <h2 id="validation-summary-title">Please answer the highlighted questions.</h2>
+          <h2 id="validation-summary-title">لطفاً به سؤال‌های مشخص‌شده پاسخ دهید.</h2>
           <ul>
             <li *ngFor="let questionIndex of validationErrors">
-              Question {{ questionIndex + 1 }} requires an answer.
+              سؤال {{ questionIndex + 1 | latinToPersianNumbers }} نیاز به پاسخ دارد.
             </li>
           </ul>
         </section>
 
         <section class="question-card" aria-live="polite">
           <p class="question">
-            {{ currentQuestionIndex + 1 }}. {{ questions[currentQuestionIndex] }}
+            {{ currentQuestionIndex + 1 | latinToPersianNumbers }}. {{ questions[currentQuestionIndex] }}
           </p>
 
           <fieldset
@@ -181,7 +182,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
             class="validation-error"
             role="alert"
           >
-            An answer is required for this question.
+            پاسخ به این سؤال ضروری است.
           </p>
 
           <div class="button-group">
@@ -204,14 +205,14 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               type="button"
               (click)="submitAssessment()"
             >
-              Submit
+              ثبت پاسخ‌ها
             </button>
           </div>
 
           <progress
             [value]="currentQuestionIndex + 1"
             [max]="questions.length"
-            [attr.aria-label]="'سؤال ' + (currentQuestionIndex + 1) + ' از ' + questions.length"
+            [attr.aria-label]="'سؤال ' + (currentQuestionIndex + 1 | latinToPersianNumbers) + ' از ' + (questions.length | latinToPersianNumbers)"
           ></progress>
         </section>
         <div class="button-group">
@@ -221,7 +222,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
       <section *ngIf="!showHistory && resultDetails as details" class="questionnaire result-card" aria-labelledby="result-title">
         <h1 id="result-title">نتیجه تست</h1>
         <div class="rule"></div>
-        <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total }}</p>
+        <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total | latinToPersianNumbers }}</p>
         <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> {{ details.severity }}</p>
         <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
         <p *ngIf="saveFailed" class="validation-error" role="alert">
@@ -233,7 +234,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           aria-valuemin="0"
           aria-valuemax="27"
           [attr.aria-valuenow]="score?.total"
-          [attr.aria-valuetext]="score?.total + ' از 27، ' + details.severity"
+          [attr.aria-valuetext]="(score?.total | latinToPersianNumbers) + ' از ۲۷، ' + details.severity"
           aria-label="امتیاز افسردگی"
         >
           <svg viewBox="0 0 220 130" aria-hidden="true" focusable="false">
@@ -256,7 +257,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
             />
           </svg>
         </div>
-        <p class="gauge-caption">{{ score?.total }} امتیاز</p>
+        <p class="gauge-caption">{{ score?.total | latinToPersianNumbers }} امتیاز</p>
         <div class="button-group">
           <button type="button" (click)="restartAssessment()">انجام مجدد تست</button>
           <button #resultHistoryAction type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
@@ -271,6 +272,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         min-height: 100vh;
         color: #263238;
         font-family: Arial, sans-serif;
+        direction: rtl;
       }
 
       main {
@@ -296,7 +298,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         text-align: center;
       }
 
-      h1 span {
+      h1 bdi {
         direction: ltr;
         unicode-bidi: isolate;
       }
@@ -368,6 +370,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
       .button-group {
         display: flex;
         justify-content: space-between;
+        flex-wrap: wrap;
         gap: 1rem;
         margin-top: 1.5rem;
       }
@@ -423,6 +426,8 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         transform: translate(-50%, -50%);
         box-sizing: border-box;
         width: min(32rem, calc(100vw - 2rem));
+        max-height: calc(100vh - 2rem);
+        overflow: auto;
         padding: 1.5rem;
         border: 2px solid #546e7a;
         border-radius: 0.25rem;
@@ -485,6 +490,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
 })
 export class Phq9ShellComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly numberPipe = new LatinToPersianNumbersPipe();
   private readonly assessmentStorage = inject(Phq9AssessmentStorage);
   private readonly initialHistory = this.assessmentStorage.read();
   readonly historyNotice = !this.initialHistory.ok
@@ -713,7 +719,7 @@ export class Phq9ShellComponent {
   }
 
   formatHistoryDate(createdAt: string): string {
-    return this.historyDateFormatter.format(new Date(createdAt));
+    return this.numberPipe.transform(this.historyDateFormatter.format(new Date(createdAt))) as string;
   }
 
   selectAnswer(answer: number): void {
