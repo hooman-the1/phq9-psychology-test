@@ -1,6 +1,21 @@
 # PHQ-9
 
-Minimal standalone Angular shell for the PHQ-9 application.
+A Persian, right-to-left PHQ-9 screening app that runs entirely in the browser.
+Answer nine questions to see a total score, severity category, and the
+corresponding recommendation. Completed assessments can be revisited locally.
+
+## Why use this project?
+
+- **Expert-reviewed Persian content:** The Persian questionnaire was translated
+  and audited by a mental health expert. Credit: [@yek_ravankav](https://www.instagram.com/yek_ravankav/).
+- **Private, offline use:** The app needs no account, backend, API, or external
+  runtime service. Assessments stay in the same browser profile.
+- **Clear results and history:** See the score and category recommendation,
+  revisit saved answers in read-only detail, or delete individual records or
+  all history.
+- **Portable and verifiable:** The app builds as static files with local fonts
+  and assets. Automated tests cover scoring, the assessment flow, storage,
+  and history interactions.
 
 ## Local development
 
