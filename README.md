@@ -30,6 +30,16 @@ server-side application runtime is required. The production document uses
 `<base href="/">`, so its scripts, stylesheet, favicon, and local fonts load
 from that root.
 
+For a local smoke check from the repository root, run:
+
+~~~powershell
+python -m http.server 8765 --bind 127.0.0.1 --directory dist/phq9/browser
+~~~
+
+Open http://127.0.0.1:8765/ and refresh it. This command serves the
+root route; a production host also needs the fallback described below for any
+future client-side routes.
+
 The app uses Angular's history-based routing. Configure the static server to
 serve an existing file normally and return `index.html` for a request to a
 client-side route. Currently the only application route is `/`, which opens
