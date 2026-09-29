@@ -57,13 +57,18 @@ describe('clear all history', () => {
     tick();
     expect(dialog()).toBeNull();
     expect(document.activeElement).toBe(action());
+    expect(history().querySelectorAll('.history-list li').length).toBe(1);
+    expect(history().querySelector('[data-record-id="saved"]')?.textContent).toContain(record.result.severityLabel);
     expect(localStorage.getItem(key)).toBe(before);
     action()!.click();
     fixture.detectChanges();
     (dialog()!.querySelector('.clear-cancel') as HTMLButtonElement).click();
     fixture.detectChanges();
     tick();
+    expect(dialog()).toBeNull();
     expect(document.activeElement).toBe(action());
+    expect(history().querySelectorAll('.history-list li').length).toBe(1);
+    expect(history().querySelector('[data-record-id="saved"]')?.textContent).toContain(record.result.severityLabel);
     expect(localStorage.getItem(key)).toBe(before);
   }));
 
