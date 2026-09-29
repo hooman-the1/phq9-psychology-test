@@ -22,6 +22,21 @@ fixture is removed automatically and is never part of the repository.
 
 The headless test script uses a no-GPU Chrome launcher for reliable execution in CI and restricted desktop environments. Run the development server with `npm start`.
 
+## Static deployment
+
+Run `npm run build`, then serve the files in `dist/phq9/browser` at the web
+server root (`/`). This is a static deployment: no backend, API, CDN, or
+server-side application runtime is required. The production document uses
+`<base href="/">`, so its scripts, stylesheet, favicon, and local fonts load
+from that root.
+
+The app uses Angular's history-based routing. Configure the static server to
+serve an existing file normally and return `index.html` for a request to a
+client-side route. Currently the only application route is `/`, which opens
+the PHQ-9 screen. A direct load or refresh of `/` must return `index.html`;
+the same fallback rule will support direct loads and refreshes if client-side
+routes are added later.
+
 ## Completed assessments
 
 Successful submissions are stored in this browser's `localStorage` under
