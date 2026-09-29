@@ -62,25 +62,40 @@ describe('PHQ-9 history', () => {
     expect(history.querySelector('h1')?.textContent).toContain('تاریخچه');
     expect(items.length).toBe(3);
     expect(items.map((item) => item.getAttribute('data-record-id'))).toEqual(['same-a', 'same-b', 'older']);
-    expect(items[0].querySelector('time')?.getAttribute('datetime')).toBe('2026-09-26T10:30:00.000Z');
-    expect(items[0].querySelector('time')?.textContent?.trim()).toBeTruthy();
-    expect(items[0].textContent).toContain('۲۷');
-    expect(items[0].textContent).toContain('افسردگی شدید');
+    for (const [item, expected] of items.map((item, index) => [item, [
+      record('same-a', '2026-09-26T10:30:00.000Z', 27),
+      record('same-b', '2026-09-26T10:30:00.000Z', 27),
+      record('older', '2026-09-24T09:00:00.000Z'),
+    ][index]] as const)) {
+      expect(item.querySelector('time')?.getAttribute('datetime')).toBe(expected.createdAt);
+      expect(item.querySelector('time')?.textContent?.trim()).toBeTruthy();
+      expect(item.textContent).toContain(`امتیاز: ${expected.totalScore === 27 ? '۲۷' : '۰'} از ۲۷`);
+      expect(item.textContent).toContain(expected.result.severityLabel);
+    }
     expect(write).not.toHaveBeenCalled();
     expect(localStorage.getItem(PHQ9_ASSESSMENT_STORAGE_KEY)).toBe(bytes);
   });
 
-  it('shows an explicit empty state and retains it after re-entry', () => {
-    fixture = TestBed.createComponent(Phq9ShellComponent);
-    fixture.detectChanges();
-    let history = openHistory();
-    expect(history.querySelectorAll('li').length).toBe(0);
-    expect(history.textContent).toContain('هنوز آزمونی در تاریخچه ذخیره نشده است');
-    button('بازگشت به آزمون').click();
-    fixture.detectChanges();
-    history = openHistory();
-    expect(history.textContent).toContain('هنوز آزمونی در تاریخچه ذخیره نشده است');
-  });
+  for (const raw of [null, '{"schemaVersion":1,"records":[]}']) {
+    it(`shows an explicit empty state without writes for ${raw === null ? 'a missing key' : 'an empty v1 envelope'}`, () => {
+      if (raw !== null) localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, raw);
+      fixture = TestBed.createComponent(Phq9ShellComponent);
+      fixture.detectChanges();
+      const write = spyOn(localStorage, 'setItem').and.callThrough();
+      let history = openHistory();
+      expect(history.querySelector('.history-list')).toBeNull();
+      expect(history.querySelector('.history-delete')).toBeNull();
+      expect(history.querySelector('.history-clear')).toBeNull();
+      expect(history.textContent).toContain('هنوز آزمونی در تاریخچه ذخیره نشده است');
+      expect(localStorage.getItem(PHQ9_ASSESSMENT_STORAGE_KEY)).toBe(raw);
+      button('بازگشت به آزمون').click();
+      fixture.detectChanges();
+      history = openHistory();
+      expect(history.textContent).toContain('هنوز آزمونی در تاریخچه ذخیره نشده است');
+      expect(write).not.toHaveBeenCalled();
+      expect(localStorage.getItem(PHQ9_ASSESSMENT_STORAGE_KEY)).toBe(raw);
+    });
+  }
 
   it('retains valid records and announces skipped invalid and duplicate entries', () => {
     const valid = record('valid', '2026-09-26T10:30:00.000Z');

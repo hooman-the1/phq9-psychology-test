@@ -57,6 +57,8 @@ describe('individual history deletion', () => {
     fixture.detectChanges();
     tick();
     expect(document.activeElement).toBe(deleteAction('first'));
+    expect(Array.from(history().querySelectorAll('.history-list li')).map((item) => item.getAttribute('data-record-id')))
+      .toEqual(['second', 'first']);
     expect(localStorage.getItem(key)).toBe(before);
   }));
 
@@ -80,8 +82,10 @@ describe('individual history deletion', () => {
     fixture.detectChanges();
     tick();
     expect(history().textContent).toContain('هنوز آزمونی در تاریخچه ذخیره نشده است');
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({ schemaVersion: 1, records: [] });
     expect(document.activeElement).toBe(history().querySelector('#history-title'));
-    fixture.componentInstance.closeHistory();
+    (Array.from(history().querySelectorAll('button')) as HTMLButtonElement[])
+      .find((button) => button.textContent?.trim() === 'بازگشت به آزمون')!.click();
     fixture.detectChanges();
     open();
     expect(history().querySelectorAll('.history-list li').length).toBe(0);
@@ -145,6 +149,8 @@ describe('individual history deletion', () => {
     fixture.detectChanges();
     tick();
     expect(history().querySelector('.delete-dialog')).toBeNull();
+    expect(Array.from(history().querySelectorAll('.history-list li')).map((item) => item.getAttribute('data-record-id')))
+      .toEqual(['first']);
     expect(document.activeElement).toBe(deleteAction('first'));
     expect(localStorage.getItem(key)).toBe(before);
   }));
@@ -178,5 +184,24 @@ describe('individual history deletion', () => {
     expect(history().textContent).toContain('حذف نشد');
     expect(history().querySelector('.history-delete')).toBeNull();
     expect(write).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite a missing, empty, or malformed value at confirmation', () => {
+    for (const raw of [null, '{"schemaVersion":1,"records":[]}', '{broken']) {
+      store([first]);
+      fixture = TestBed.createComponent(Phq9ShellComponent);
+      fixture.detectChanges();
+      open();
+      deleteAction('first').click();
+      fixture.detectChanges();
+      if (raw === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, raw);
+      (history().querySelector('.delete-confirm') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(history().textContent).toContain('حذف نشد');
+      expect(history().querySelector('.history-delete')).toBeNull();
+      expect(localStorage.getItem(key)).toBe(raw);
+      fixture.destroy();
+    }
   });
 });
