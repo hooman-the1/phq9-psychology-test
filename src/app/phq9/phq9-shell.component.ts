@@ -14,31 +14,36 @@ import {
   validatePhq9Answers,
 } from './phq9-validation';
 
-const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendation: string; color: string }> = {
+const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendation: string; color: string; icon: string }> = {
   minimal: {
     severity: 'حداقل افسردگی',
     recommendation: 'نیازی به اقدام خاصی نیست، اما مراقب حال و هوای خود باشید.',
     color: '#43a047',
+    icon: '🙂',
   },
   mild: {
     severity: 'افسردگی خفیف',
     recommendation: 'تغییرات خلق خود را زیر نظر بگیرید و در صورت نیاز با یک دوست یا مشاور صحبت کنید.',
     color: '#fdd835',
+    icon: '😐',
   },
   moderate: {
     severity: 'افسردگی متوسط',
     recommendation: 'صحبت با یک روانشناس یا مشاور توصیه می‌شود.',
     color: '#fb8c00',
+    icon: '😕',
   },
   moderately_severe: {
     severity: 'افسردگی نسبتاً شدید',
     recommendation: 'به شدت توصیه می‌شود از یک متخصص سلامت روان کمک بگیرید.',
     color: '#e53935',
+    icon: '😟',
   },
   severe: {
     severity: 'افسردگی شدید',
     recommendation: 'نیاز فوری به مداخله تخصصی روانشناسی یا روانپزشکی وجود دارد.',
     color: '#b71c1c',
+    icon: '😟',
   },
 };
 
@@ -46,7 +51,12 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
   selector: 'app-phq9-shell',
   standalone: true,
   imports: [CommonModule, LatinToPersianNumbersPipe],
+  host: { '[class.result-mode]': 'submitted && !showHistory' },
   template: `
+    <header *ngIf="!showHistory && submitted" class="result-brand" dir="rtl">
+      <span>یک روانکاو</span>
+      <img src="favicon.png" alt="" width="40" height="40" />
+    </header>
     <main dir="rtl">
       <p *ngIf="!showHistory && historyNotice" class="history-notice validation-summary" role="alert">
         {{ historyNotice }}
@@ -223,10 +233,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         </div>
       </section>
       <section *ngIf="!showHistory && resultDetails as details" class="questionnaire result-card" aria-labelledby="result-title">
-        <h1 id="result-title">نتیجه تست</h1>
-        <div class="rule"></div>
+        <h1 id="result-title">تست تشخیص افسردگی <bdi dir="ltr">PHQ-9</bdi></h1>
+        <div class="result-inner">
+        <h2>نتیجه تست</h2>
         <p class="result-total"><strong>مجموع امتیاز:</strong> {{ score?.total | latinToPersianNumbers }}</p>
-        <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> <span [style.color]="score?.category === 'mild' ? '#795900' : details.color">{{ details.severity }}</span></p>
+        <p class="result-severity" [style.border-bottom-color]="details.color"><strong>شدت افسردگی:</strong> <span class="result-severity-icon" aria-hidden="true">{{ details.icon }}</span> <span [style.color]="score?.category === 'mild' ? '#795900' : details.color">{{ details.severity }}</span></p>
         <p class="result-recommendation"><strong>توصیه:</strong> {{ details.recommendation }}</p>
         <p *ngIf="saveFailed" class="validation-error" role="alert">
           نتیجه ذخیره نشد. می‌توانید آن را در این صفحه ببینید، اما پس از بستن صفحه باقی نمی‌ماند.
@@ -240,11 +251,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           [attr.aria-valuetext]="(score?.total | latinToPersianNumbers) + ' از ۲۷، ' + details.severity"
           aria-label="امتیاز افسردگی"
         >
-          <svg viewBox="0 0 220 130" aria-hidden="true" focusable="false">
-            <path class="gauge-track" d="M 20 110 A 90 90 0 0 1 200 110" fill="none" stroke="#e0e0e0" stroke-width="15" stroke-linecap="round" />
+          <svg viewBox="0 -40 220 210" aria-hidden="true" focusable="false">
+            <path class="gauge-track" d="M 42.45 134 A 78 78 0 1 1 177.55 134" fill="none" stroke="#e0e0e0" stroke-width="15" stroke-linecap="round" />
             <path
               class="gauge-foreground"
-              d="M 20 110 A 90 90 0 0 1 200 110"
+              d="M 42.45 134 A 78 78 0 1 1 177.55 134"
               fill="none"
               [attr.stroke]="details.color"
               stroke-width="15"
@@ -252,12 +263,11 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
               pathLength="27"
               [attr.stroke-dasharray]="score?.total + ' 27'"
             />
-            <polygon
-              class="gauge-marker"
-              points="0,-12 -6,-2 6,-2"
-              [attr.fill]="details.color"
-              [attr.transform]="markerTransform"
-            />
+            <g class="gauge-indicator" [attr.transform]="markerTransform">
+              <line class="gauge-needle" x1="4" y1="0" x2="26" y2="0" [attr.stroke]="details.color" stroke-width="2" stroke-linecap="round" />
+              <polygon class="gauge-marker" points="31,0 23,-4 23,4" [attr.fill]="details.color" />
+            </g>
+            <text class="gauge-marker-label" [attr.x]="markerLabelX" [attr.y]="markerLabelY" [attr.text-anchor]="markerLabelAnchor" direction="rtl">نمره شما: {{ score?.total | latinToPersianNumbers }}</text>
           </svg>
         </div>
         <p class="gauge-caption">{{ score?.total | latinToPersianNumbers }} امتیاز</p>
@@ -265,8 +275,10 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
           <button class="restart-action" type="button" (click)="restartAssessment()">انجام مجدد تست</button>
           <button #resultHistoryAction class="result-history-action" type="button" (click)="openHistory()">تاریخچه آزمون‌ها</button>
         </div>
+        </div>
       </section>
     </main>
+    <footer *ngIf="!showHistory && submitted" class="result-footer" dir="ltr">Created with <span aria-label="love">♥</span> by yek_ravankav</footer>
   `,
   styles: [
     `
@@ -466,6 +478,39 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         padding-bottom: 0.2rem;
       }
 
+      .gauge-foreground {
+        animation: gauge-fill 1.2s ease-out both;
+      }
+
+      .gauge-indicator,
+      .gauge-marker-label {
+        animation: gauge-indicator-appear 0.2s ease-out 1s both;
+      }
+
+      .gauge-marker-label {
+        font: 700 13px Vazir, Tahoma, sans-serif;
+        fill: #263238;
+        paint-order: stroke;
+        stroke: #fff;
+        stroke-width: 3px;
+      }
+
+      @keyframes gauge-fill {
+        from { stroke-dashoffset: 27; }
+        to { stroke-dashoffset: 0; }
+      }
+
+      @keyframes gauge-indicator-appear {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .gauge-foreground,
+        .gauge-indicator,
+        .gauge-marker-label { animation: none; }
+      }
+
       .result-gauge {
         width: min(220px, 100%);
         margin: 1.875rem auto 0;
@@ -536,16 +581,33 @@ export class Phq9ShellComponent {
     return !!this.historyRead?.ok && 'partial' in this.historyRead && this.historyRead.partial;
   }
 
-  get resultDetails(): { severity: string; recommendation: string; color: string } | null {
+  get resultDetails(): { severity: string; recommendation: string; color: string; icon: string } | null {
     return this.submitted && this.score ? RESULT_COPY[this.score.category] : null;
   }
 
   get markerTransform(): string {
-    const fraction = (this.score?.total ?? 0) / 27;
-    const x = 110 - 90 * Math.cos(Math.PI * fraction);
-    const y = 110 - 90 * Math.sin(Math.PI * fraction);
-    const angle = -90 + 180 * fraction;
+    const arcAngle = this.markerAngleRadians;
+    const x = 110 + 78 * Math.cos(arcAngle);
+    const y = 95 + 78 * Math.sin(arcAngle);
+    const angle = arcAngle * 180 / Math.PI;
     return `translate(${x} ${y}) rotate(${angle})`;
+  }
+
+  get markerLabelX(): number {
+    const cosine = Math.cos(this.markerAngleRadians);
+    return 110 + 109 * cosine + (cosine < 0 ? 4 : -4);
+  }
+
+  get markerLabelY(): number {
+    return 95 + 109 * Math.sin(this.markerAngleRadians) - 7;
+  }
+
+  get markerLabelAnchor(): 'start' | 'end' {
+    return Math.cos(this.markerAngleRadians) < 0 ? 'end' : 'start';
+  }
+
+  private get markerAngleRadians(): number {
+    return (150 + 240 * (this.score?.total ?? 0) / 27) * Math.PI / 180;
   }
 
   @ViewChild('validationSummary')
