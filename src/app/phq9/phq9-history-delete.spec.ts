@@ -62,6 +62,27 @@ describe('individual history deletion', () => {
     expect(localStorage.getItem(key)).toBe(before);
   }));
 
+  it('keeps keyboard focus inside the delete dialog in both Tab directions', fakeAsync(() => {
+    store([first]);
+    fixture = TestBed.createComponent(Phq9ShellComponent);
+    fixture.detectChanges();
+    open();
+    tick();
+    deleteAction('first').click();
+    fixture.detectChanges();
+    tick();
+
+    const dialog = history().querySelector('.delete-dialog') as HTMLElement;
+    const cancel = dialog.querySelector('.delete-cancel') as HTMLButtonElement;
+    const confirm = dialog.querySelector('.delete-confirm') as HTMLButtonElement;
+    confirm.focus();
+    confirm.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(cancel);
+
+    cancel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(confirm);
+  }));
+
   it('deletes only the selected ID, updates the list, and survives reopening', fakeAsync(() => {
     store([first, second]);
     fixture = TestBed.createComponent(Phq9ShellComponent);

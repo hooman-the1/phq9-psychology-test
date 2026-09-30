@@ -92,7 +92,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         </ng-container>
         <section *ngIf="pendingClearAll" class="delete-dialog clear-dialog" role="alertdialog" aria-modal="true"
           aria-labelledby="clear-title" aria-describedby="clear-description" (keydown.escape)="cancelClearAll()"
-          (keydown)="keepClearFocus($event)">
+          (keydown)="keepDialogFocus($event)">
           <h2 id="clear-title">پاک کردن همهٔ تاریخچه</h2>
           <p id="clear-description">همهٔ آزمون‌های ذخیره‌شده برای همیشه حذف می‌شوند. این حذف دائمی است.</p>
           <div class="button-group">
@@ -102,7 +102,7 @@ const RESULT_COPY: Record<Phq9SeverityCategory, { severity: string; recommendati
         </section>
         <section *ngIf="pendingDeleteRecord as record" class="delete-dialog" role="alertdialog" aria-modal="true"
           aria-labelledby="delete-title" aria-describedby="delete-description" (keydown.escape)="cancelDelete()"
-          (keydown.tab)="keepDeleteFocus($event)">
+          (keydown)="keepDialogFocus($event)">
           <h2 id="delete-title">حذف آزمون ذخیره‌شده</h2>
           <p id="delete-description">آزمون ثبت‌شده در {{ formatHistoryDate(record.createdAt) }} با امتیاز {{ record.totalScore | latinToPersianNumbers }} از ۲۷ برای همیشه حذف می‌شود. این حذف دائمی است.</p>
           <div class="button-group">
@@ -660,10 +660,11 @@ export class Phq9ShellComponent {
     setTimeout(() => this.clearAction?.nativeElement.focus());
   }
 
-  keepClearFocus(event: Event): void {
+  keepDialogFocus(event: Event): void {
     const keyboardEvent = event as KeyboardEvent;
     if (keyboardEvent.key !== 'Tab') return;
-    const buttons = Array.from(this.host.nativeElement.querySelectorAll<HTMLButtonElement>('.clear-dialog button'));
+    const dialog = event.currentTarget as HTMLElement;
+    const buttons = Array.from(dialog.querySelectorAll<HTMLButtonElement>('button'));
     if (buttons.length === 0) return;
     const target = event.target as HTMLElement;
     if (keyboardEvent.shiftKey && target === buttons[0]) {
@@ -696,20 +697,6 @@ export class Phq9ShellComponent {
     const id = this.pendingDeleteRecord?.id;
     this.pendingDeleteRecord = null;
     setTimeout(() => this.focusDeleteAction(id));
-  }
-
-  keepDeleteFocus(event: Event): void {
-    const keyboardEvent = event as KeyboardEvent;
-    const buttons = Array.from(this.host.nativeElement.querySelectorAll<HTMLButtonElement>('.delete-dialog button'));
-    if (buttons.length === 0) return;
-    const target = event.target as HTMLElement;
-    if (keyboardEvent.shiftKey && target === buttons[0]) {
-      event.preventDefault();
-      buttons[buttons.length - 1].focus();
-    } else if (!keyboardEvent.shiftKey && target === buttons[buttons.length - 1]) {
-      event.preventDefault();
-      buttons[0].focus();
-    }
   }
 
   confirmDelete(): void {

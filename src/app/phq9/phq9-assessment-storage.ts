@@ -63,9 +63,9 @@ export class Phq9AssessmentStorage {
   }
 
   save(assessment: Omit<Phq9AssessmentRecord, 'id' | 'createdAt'>): Phq9StorageSaveResult {
-    const existing = this.read();
-    if (!existing.ok || ('partial' in existing && existing.partial)) {
-      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
+    const existing = this.readForUpdate();
+    if (!existing.ok) {
+      return existing;
     }
 
     let id: string;
@@ -89,57 +89,61 @@ export class Phq9AssessmentStorage {
       return { ok: false, error: 'invalid-data' };
     }
 
-    const envelope: Phq9AssessmentEnvelope = {
-      schemaVersion: PHQ9_ASSESSMENT_SCHEMA_VERSION,
-      records: [...existing.records, record],
-    };
-    try {
-      window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
-      return { ok: true, record };
-    } catch {
-      return { ok: false, error: 'write-failed' };
-    }
+    return this.writeRecords([...existing.records, record])
+      ? { ok: true, record }
+      : { ok: false, error: 'write-failed' };
   }
 
   delete(id: string): Phq9StorageDeleteResult {
-    const existing = this.read();
-    if (!existing.ok || ('partial' in existing && existing.partial)) {
-      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
+    const existing = this.readForUpdate();
+    if (!existing.ok) {
+      return existing;
     }
     if (!existing.records.some((record) => record.id === id)) {
       return { ok: false, error: 'missing' };
     }
 
-    const envelope: Phq9AssessmentEnvelope = {
-      schemaVersion: PHQ9_ASSESSMENT_SCHEMA_VERSION,
-      records: existing.records.filter((record) => record.id !== id),
-    };
-    try {
-      window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
-      return { ok: true };
-    } catch {
-      return { ok: false, error: 'write-failed' };
-    }
+    return this.writeRecords(existing.records.filter((record) => record.id !== id))
+      ? { ok: true }
+      : { ok: false, error: 'write-failed' };
   }
 
   clearAll(): Phq9StorageDeleteResult {
-    const existing = this.read();
-    if (!existing.ok || ('partial' in existing && existing.partial)) {
-      return { ok: false, error: existing.ok ? 'invalid-data' : existing.error };
+    const existing = this.readForUpdate();
+    if (!existing.ok) {
+      return existing;
     }
     if (existing.records.length === 0) {
       return { ok: false, error: 'missing' };
     }
 
+    return this.writeRecords([])
+      ? { ok: true }
+      : { ok: false, error: 'write-failed' };
+  }
+
+  private readForUpdate():
+    | { readonly ok: true; readonly records: readonly Phq9AssessmentRecord[] }
+    | { readonly ok: false; readonly error: 'unavailable' | 'invalid-data' } {
+    const result = this.read();
+    if (!result.ok) {
+      return result;
+    }
+    return 'partial' in result && result.partial
+      ? { ok: false, error: 'invalid-data' }
+      : { ok: true, records: result.records };
+  }
+
+  private writeRecords(records: readonly Phq9AssessmentRecord[]): boolean {
     const envelope: Phq9AssessmentEnvelope = {
       schemaVersion: PHQ9_ASSESSMENT_SCHEMA_VERSION,
-      records: [],
+      records,
     };
     try {
       window.localStorage.setItem(PHQ9_ASSESSMENT_STORAGE_KEY, JSON.stringify(envelope));
-      return { ok: true };
+      return true;
     } catch {
-      return { ok: false, error: 'write-failed' };
+      return false;
     }
   }
 }
